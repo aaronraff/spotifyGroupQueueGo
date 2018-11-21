@@ -1,1 +1,1 @@
-web: spotify-group-queue
+web: bin/spotifyGroupQueue
