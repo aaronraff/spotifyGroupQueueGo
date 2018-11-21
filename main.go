@@ -9,8 +9,8 @@ import (
 func main() {
 	// For Heroku
 	port := os.Getenv("PORT")
-	if port == nil {
-		port = 8080
+	if port == "" {
+		port = "8080"
 	}
 
 	http.HandleFunc("/", handler)
