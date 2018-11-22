@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
-	"io/ioutil"
 )
 
 func main() {
@@ -19,8 +17,7 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	res, _ := ioutil.ReadFile("test.html")
-	fmt.Fprintf(w, string(res));
+	http.ServeFile(w, r, r.URL.Path[1:])
 }
 
 
