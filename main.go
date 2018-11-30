@@ -2,14 +2,28 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
+	"log"
 	"os"
+	"net/http"
 	"encoding/json"
-	"bytes"
+	"github.com/gorilla/sessions"
+	"github.com/gorilla/context"
+	"github.com/zmb3/spotify"
+	"golang.org/x/oauth2"
 )
 
 var baseUrl string
+var key = []byte("test-key")
+var store = sessions.NewCookieStore(key)
+
+type ProfileData struct {
+	Username string
+}
+
+var redirectURI = "http://localhost:8080/spotify-callback"
+var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail)
+var ch = make(chan* spotify.Client)
+var state = "testState"
 
 func main() {
 	// For Heroku
@@ -20,37 +34,58 @@ func main() {
 
 	http.HandleFunc("/login", loginHandler);
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":" + port, nil)
+	http.HandleFunc("/profile", profileHandler)
+	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	clientId := os.Getenv("CLIENTID")
-	baseUrl = "http://" + r.Host
-	redirectUri := url.QueryEscape(baseUrl + "/spotify-callback")
-	scopes := url.QueryEscape("user-modify-playback-state user-read-playback-state")
-	url := "https://accounts.spotify.com/authorize"	+
-		   "?response_type=code" + "&client_id=" + clientId +
-		   "&scope=" + scopes + "&redirect_uri=" + redirectUri
-	http.Redirect(w, r, url, http.StatusSeeOther)
+	url := auth.AuthURL(state)
+	fmt.Println(url)
+	fmt.Println("Please log into Spotify", url)
+
+	// Wait for auth to complete
+	client := <-ch
+
+	user, err := client.CurrentUser()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprint(w, "You are logged in as: ", user.ID)
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	// Used for obtaining an access token
-	fmt.Printf("Made it.")
-	code := r.URL.Query().Get("code")
-	body := make(map[string]string)
-	body["grant-type"] = "authorization-code"
-	body["code"] = code
-	bodyJson, _ := json.Marshal(body)
-	// Must match URI that was used when requesting code (not actually used)
-	body["redirect_uri"] = baseUrl + "/spotify-callback"
-	http.Post("https://accounts.spotify.com/api/token", "application/x-www-form-urlencoded", bytes.NewBuffer(bodyJson))
-	http.Redirect(w, r, "/success", http.StatusSeeOther)
+	tok, err := auth.Token(state, r)
+	if err != nil {
+		http.Error(w, "Couldn't get token", http.StatusForbidden)
+		log.Fatal(err)
+	}
+	
+	st := r.FormValue("state")
+	if st != state {
+		http.NotFound(w, r)
+		log.Fatal("State mismatch.")
+	}
+
+	client := auth.NewClient(tok)
+	ch <- &client
+
+	tokJson, _ := json.Marshal(tok)
+
+	session, _ := store.Get(r, "groupQueue")
+	session.Values["token"] = tokJson
+	session.Save(r, w)
+
+	http.Redirect(w, r, "/profile", http.StatusSeeOther)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, r.URL.Path[1:] + ".html")
+func profileHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "groupQueue")
+	var tok oauth2.Token
+	val, _ := session.Values["token"].([]byte)
+	json.Unmarshal(val, tok) 
+
+	client := auth.NewClient(&tok)
+	user, _ := client.CurrentUser()
+	fmt.Fprintf(w, "Hello %s!",  user.ID)
 }
-
-
