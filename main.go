@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"net/http"
-	"encoding/json"
+	"encoding/gob"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
@@ -25,6 +25,11 @@ var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail)
 var ch = make(chan* spotify.Client)
 var state = "testState"
 
+// https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
+func init() {
+	gob.Register(&oauth2.Token{})	
+}
+
 func main() {
 	// For Heroku
 	port := os.Getenv("PORT")
@@ -40,18 +45,9 @@ func main() {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	url := auth.AuthURL(state)
-	fmt.Println(url)
-	fmt.Println("Please log into Spotify", url)
 
-	// Wait for auth to complete
-	client := <-ch
-
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprint(w, "You are logged in as: ", user.ID)
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(w, "Please log into <a href=%s target=\"_blank\">Spotify</a>", url)	
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,13 +63,9 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("State mismatch.")
 	}
 
-	client := auth.NewClient(tok)
-	ch <- &client
-
-	tokJson, _ := json.Marshal(tok)
 
 	session, _ := store.Get(r, "groupQueue")
-	session.Values["token"] = tokJson
+	session.Values["token"] = tok
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/profile", http.StatusSeeOther)
@@ -81,11 +73,9 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "groupQueue")
-	var tok oauth2.Token
-	val, _ := session.Values["token"].([]byte)
-	json.Unmarshal(val, tok) 
+	tok, _ := session.Values["token"].(*oauth2.Token)
 
-	client := auth.NewClient(&tok)
+	client := auth.NewClient(tok)
 	user, _ := client.CurrentUser()
 	fmt.Fprintf(w, "Hello %s!",  user.ID)
 }

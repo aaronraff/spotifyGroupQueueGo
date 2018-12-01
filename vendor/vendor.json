@@ -1,6 +1,49 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [],
-	"rootPath": "spotifyGroupQueue"
+	"package": [
+		{
+			"checksumSHA1": "oHwfghigjTz8Xs+ssxwdl/atb44=",
+			"path": "github.com/gorilla/context",
+			"revision": "51ce91d2eaddeca0ef29a71d766bb3634dadf729",
+			"revisionTime": "2018-10-12T15:35:48Z"
+		},
+		{
+			"checksumSHA1": "NScdwrIOpSH9hoP7i3a6JGmE5rw=",
+			"path": "github.com/gorilla/securecookie",
+			"revision": "e65cf8c5df817c89aeb47ecb46064e802e2de943",
+			"revisionTime": "2018-10-10T17:46:47Z"
+		},
+		{
+			"checksumSHA1": "7gHiWm6pPBlsiDmlSwIPHJnjRWI=",
+			"path": "github.com/gorilla/sessions",
+			"revision": "68d1edeb366b66bdd5d714e32d7a065f74b03b9b",
+			"revisionTime": "2018-10-14T08:38:51Z"
+		},
+		{
+			"checksumSHA1": "L2KxqPdEKK2oNHv4Ne4mJxTYo3c=",
+			"path": "github.com/zmb3/spotify",
+			"revision": "a4bd83f60e06ab58f3516c61680d0532aabf470e",
+			"revisionTime": "2018-09-25T14:39:44Z"
+		},
+		{
+			"checksumSHA1": "aFpql3G+Nw8zkzfqLWQJNZC8pu0=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "adae6a3d119ae4890b46832a2e88a95adc62b8e7",
+			"revisionTime": "2018-11-14T21:44:15Z"
+		},
+		{
+			"checksumSHA1": "5+Wlq4i/9BUFndiLq5QMPvATj4w=",
+			"path": "golang.org/x/oauth2",
+			"revision": "8f65e3013ebad444f13bc19536f7865efc793816",
+			"revisionTime": "2018-11-20T19:07:42Z"
+		},
+		{
+			"checksumSHA1": "w/v9CfU82E/yLVhfloh4vSn/9YA=",
+			"path": "golang.org/x/oauth2/internal",
+			"revision": "8f65e3013ebad444f13bc19536f7865efc793816",
+			"revisionTime": "2018-11-20T19:07:42Z"
+		}
+	],
+	"rootPath": "spotifyGroupQueueGo"
 }
