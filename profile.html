@@ -1,1 +1,18 @@
-<h1 style="display: inline-block"> {{ .ID }}'s Queue </h1>
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> {{ .ID }}'s Profile </title>
+		<link rel="stylesheet" type="text/css" href="/static/profile.css">
+	</head>
+	<body>
+		<div id="header">
+			<h1 id="app-name"> Spotify Group Queue </h1>
+			<a id="logout" href="/logout"> Logout </a>
+		</div>
+
+		<div class="content">
+			<h2 id="user-id"> {{ .ID }}'s Queue </h2>
+		</div> <!-- .content -->
+	</body>
+
+</html>

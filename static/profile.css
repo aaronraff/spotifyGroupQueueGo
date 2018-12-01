@@ -1,0 +1,32 @@
+* {
+	font-family: sans-serif;
+}
+
+html, body {
+	margin: 0px;
+	padding: 0px;
+}
+
+.content {
+	margin: 20px 40px;
+}
+
+#header {
+	position: relative;
+	padding: 20px 40px;
+	background-color: #1DB954;
+}
+
+#app-name {
+	display: inline-block;
+}
+
+#logout {
+	font-size: 18px;
+	text-decoration: none;
+	color: black;
+	position: absolute;
+	top: 50%;
+	right: 10%;
+	transform: translateY(-50%);
+}

@@ -17,10 +17,6 @@ var baseUrl string
 var key = []byte("test-key")
 var store = sessions.NewCookieStore(key)
 
-type ProfileData struct {
-	Username string
-}
-
 var redirectURI = "http://localhost:8080/spotify-callback"
 var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail)
 var ch = make(chan* spotify.Client)
@@ -39,16 +35,36 @@ func main() {
 	}
 
 	http.HandleFunc("/login", loginHandler);
+	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	url := auth.AuthURL(state)
 
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, "Please log into <a href=%s target=\"_blank\">Spotify</a>", url)	
+	session, _ := store.Get(r, "groupQueue")
+	tok := session.Values["token"]
+
+	// There is a user logged in already
+	if tok != nil {
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)	
+	} else {
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprintf(w, "Please log into <a href=%s>Spotify</a>", url)	
+	}
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "groupQueue")
+
+	// Invalidate session
+	session.Options.MaxAge = -1
+	session.Save(r, w)
+
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
