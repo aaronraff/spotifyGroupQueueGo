@@ -6,6 +6,7 @@ import (
 	"os"
 	"net/http"
 	"encoding/gob"
+	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
@@ -72,10 +73,13 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("profile.html"))
+
 	session, _ := store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
 	client := auth.NewClient(tok)
 	user, _ := client.CurrentUser()
-	fmt.Fprintf(w, "Hello %s!",  user.ID)
+
+	tmpl.Execute(w, user)
 }
