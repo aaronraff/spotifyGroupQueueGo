@@ -12,3 +12,6 @@
 *.out
 
 *.swp
+
+/vendor/github.com
+/vendor/golang.org
