@@ -47,6 +47,7 @@
 			function updateSongList(resultData) {
 				// Clear out any songs added earlier
 				$("#song-container").empty()
+				console.log(resultData)
 
 				for(var i = 0; i < 10; i++) {
 					var item = resultData[i]
@@ -54,11 +55,30 @@
 									"<img src=" + item.album.images[2].url + ">" +
 									"<h3>" + item.name + "</h3>" +
 									"<p>" + item.artists[0].name + "</p>" +
+									"<button class='add' id=" + item.id + ">" + "Add to queue </button" +
 								  "</div>"
 								);
 
 					$("#song-container").append(elem);
 				}
+
+			$(".add").click(addToQueue);
+
+			}
+
+			function addToQueue(e) {
+				var songID = e.target.id
+
+				$.ajax({
+					type: "POST",
+					url: "/add",
+					data: { "songID": songID },
+					success: function() {
+						console.log(e)
+						e.target.innerHTML = "Added!"
+						e.target.style.backgroundColor = '#1DB954';
+					}
+				})
 			}
 		</script>
 	</body>

@@ -6,7 +6,6 @@ import (
 	"os"
 	"net/http"
 	"encoding/gob"
-	"encoding/json"
 	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
@@ -14,13 +13,14 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var baseUrl string
+var aseUrl string
 var key = []byte("test-key")
-var store = sessions.NewCookieStore(key)
+
+// Uppercase so it can be accessed by the api
+var Store = sessions.NewCookieStore(key)
 
 var redirectURI = "http://localhost:8080/spotify-callback"
-var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail)
-var ch = make(chan* spotify.Client)
+var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic)
 var state = "testState"
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
@@ -39,7 +39,8 @@ func main() {
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
-	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/search", SearchHandler)
+	http.HandleFunc("/add", AddToQueueHandler )
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -47,7 +48,7 @@ func main() {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	url := auth.AuthURL(state)
 
-	session, _ := store.Get(r, "groupQueue")
+	session, _ := Store.Get(r, "groupQueue")
 	tok := session.Values["token"]
 
 	// There is a user logged in already
@@ -60,7 +61,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "groupQueue")
+	session, _ := Store.Get(r, "groupQueue")
 
 	// Invalidate session
 	session.Options.MaxAge = -1
@@ -83,7 +84,7 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	session, _ := store.Get(r, "groupQueue")
+	session, _ := Store.Get(r, "groupQueue")
 	session.Values["token"] = tok
 	session.Save(r, w)
 
@@ -93,7 +94,7 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("profile.html"))
 
-	session, _ := store.Get(r, "groupQueue")
+	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
 	client := auth.NewClient(tok)
@@ -102,23 +103,3 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, user)
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
-	songName := r.FormValue("songName")
-
-	session, _ := store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
-
-	client := auth.NewClient(tok)
-
-	results, err := client.Search(songName, spotify.SearchTypeTrack)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resJson, _ := json.Marshal(results.Tracks.Tracks)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	// Send response to client
-	w.Write(resJson)
-}
