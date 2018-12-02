@@ -16,6 +16,9 @@
 			<form id="search-form">
 				<input class="search-bar" placeholder="Song name">
 			</form>
+
+			<div id="song-container">
+			</div>
 		</div> <!-- .content -->
 
 		<script
@@ -42,7 +45,20 @@
 			}
 
 			function updateSongList(resultData) {
-				console.log(resultData);
+				// Clear out any songs added earlier
+				$("#song-container").empty()
+
+				for(var i = 0; i < 10; i++) {
+					var item = resultData[i]
+					var elem = $("<div class='song-item'>" +
+									"<img src=" + item.album.images[2].url + ">" +
+									"<h3>" + item.name + "</h3>" +
+									"<p>" + item.artists[0].name + "</p>" +
+								  "</div>"
+								);
+
+					$("#song-container").append(elem);
+				}
 			}
 		</script>
 	</body>

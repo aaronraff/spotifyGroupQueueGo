@@ -29,6 +29,15 @@ html, body {
 	outline: none;
 }
 
+.song-item {
+	margin-bottom: 40px;
+}
+
+.song-item img {
+	float: left;
+	margin-right: 20px;
+}
+
 #logout {
 	font-size: 18px;
 	text-decoration: none;
