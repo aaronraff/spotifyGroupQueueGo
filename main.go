@@ -6,6 +6,7 @@ import (
 	"os"
 	"net/http"
 	"encoding/gob"
+	"encoding/json"
 	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
@@ -38,6 +39,7 @@ func main() {
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
+	http.HandleFunc("/search", searchHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -98,4 +100,25 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	user, _ := client.CurrentUser()
 
 	tmpl.Execute(w, user)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	songName := r.FormValue("songName")
+
+	session, _ := store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	client := auth.NewClient(tok)
+
+	results, err := client.Search(songName, spotify.SearchTypeTrack)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resJson, _ := json.Marshal(results.Tracks.Tracks)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Send response to client
+	w.Write(resJson)
 }

@@ -12,7 +12,38 @@
 
 		<div class="content">
 			<h2 id="user-id"> {{ .ID }}'s Queue </h2>
-		</div> <!-- .content -->
-	</body>
 
+			<form id="search-form">
+				<input class="search-bar" placeholder="Song name">
+			</form>
+		</div> <!-- .content -->
+
+		<script
+		  src="https://code.jquery.com/jquery-3.3.1.min.js"
+		  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+		  crossorigin="anonymous">
+		</script>
+
+		<script>
+			$("#search-form").submit(searchSubmit);
+
+			function searchSubmit() {
+				var songName = $(".search-bar").val()
+				
+				$.ajax({
+					type: "POST",
+					url: "/search",
+					data: { "songName": songName },
+					success: updateSongList
+				})
+
+				// Don't refresh the page
+				return false;
+			}
+
+			function updateSongList(resultData) {
+				console.log(resultData);
+			}
+		</script>
+	</body>
 </html>
