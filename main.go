@@ -5,9 +5,7 @@ import (
 	"os"
 	"net/http"
 	"encoding/gob"
-	"crypto/rand"
 	"text/template"
-	"encoding/base64"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
@@ -49,6 +47,8 @@ func main() {
 	http.HandleFunc("/search", SearchHandler)
 	http.HandleFunc("/add", AddToQueueHandler)
 	http.HandleFunc("/join", JoinRoomHandler)
+	http.HandleFunc("/room/open", OpenRoomHandler)
+	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
@@ -113,19 +113,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	
 	if !ok {
 		// No room code exists for this user
-		// Generate one
-		code := make([]byte, 7)
-		rand.Read(code)
-
-		// Need to make it base64
-		str := base64.StdEncoding.EncodeToString(code)
-
-		// Need to cut off at 7 chars (base64 can be longer)
-		val = RoomInfo{str[:7], tok}
-		Rooms[user.ID] = val
+		val.code = "The room is not active."
 	}
 
-	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code})
+	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
+											"isActive": ok, "isOwner": true})
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,5 +138,6 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.ParseFiles("profile.html"))
-	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode)})
+	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode), 
+											"isActive": true, "isOwner": false})
 }

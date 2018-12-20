@@ -14,6 +14,15 @@
 			<h2 id="user-id"> {{ .user.ID }}'s Queue </h2>
 			<h4> Room Code: {{ .code }} </h4>
 
+			{{ if not .isActive }}
+				<button id="open-room"> Open the room </button>
+			{{ end }}
+
+			{{ if and .isActive .isOwner }}
+				<button id="close-room"> Close the room </button>
+			{{ end }}
+
+
 			<form id="search-form">
 				<input class="search-bar" placeholder="Song name">
 				<input id="room-code" type="hidden" value="{{ .code }}">
@@ -81,6 +90,30 @@
 						console.log(e)
 						e.target.innerHTML = "Added!"
 						e.target.style.backgroundColor = '#1DB954';
+					}
+				})
+			}
+
+			$("#open-room").click(openRoom)
+			
+			function openRoom() {
+				$.ajax({
+					type: "POST",
+					url: "/room/open",
+					success: function() {
+						location.reload();
+					}
+				})
+			}
+
+			$("#close-room").click(closeRoom)
+			
+			function closeRoom() {
+				$.ajax({
+					type: "POST",
+					url: "/room/close",
+					success: function() {
+						location.reload();
 					}
 				})
 			}

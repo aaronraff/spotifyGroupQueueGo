@@ -3,10 +3,48 @@ package main
 import (
 	"log"
 	"net/http"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
+
+func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := Store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	client := auth.NewClient(tok)
+	user, _ := client.CurrentUser()
+
+	// Generate a code for the new room
+	code := make([]byte, 7)
+	rand.Read(code)
+
+	// Need to make it base64
+	str := base64.StdEncoding.EncodeToString(code)
+
+	// Need to cut off at 7 chars (base64 can be longer)
+	val := RoomInfo{str[:7], tok}
+	Rooms[user.ID] = val
+
+	// Success
+	w.WriteHeader(200)
+}
+
+func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := Store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	client := auth.NewClient(tok)
+	user, _ := client.CurrentUser()
+
+	// Remove the room from the map
+	delete(Rooms, user.ID)
+
+	// Success
+	w.WriteHeader(200)
+}
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	songName := r.FormValue("songName")
