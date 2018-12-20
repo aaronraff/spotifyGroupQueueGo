@@ -145,7 +145,6 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Print("testing")
 	tmpl := template.Must(template.ParseFiles("profile.html"))
 	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode)})
 }

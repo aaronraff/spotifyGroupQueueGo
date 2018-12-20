@@ -16,6 +16,7 @@
 
 			<form id="search-form">
 				<input class="search-bar" placeholder="Song name">
+				<input id="room-code" type="hidden" value="{{ .code }}">
 			</form>
 
 			<div id="song-container">
@@ -29,6 +30,9 @@
 		</script>
 
 		<script>
+			// Used in multiple functions and is constant
+			var roomCode = $("#room-code").val()
+
 			$("#search-form").submit(searchSubmit);
 
 			function searchSubmit() {
@@ -37,7 +41,7 @@
 				$.ajax({
 					type: "POST",
 					url: "/search",
-					data: { "songName": songName },
+					data: { "songName": songName, "roomCode": roomCode },
 					success: updateSongList
 				})
 
@@ -48,7 +52,6 @@
 			function updateSongList(resultData) {
 				// Clear out any songs added earlier
 				$("#song-container").empty()
-				console.log(resultData)
 
 				for(var i = 0; i < 10; i++) {
 					var item = resultData[i]
@@ -73,7 +76,7 @@
 				$.ajax({
 					type: "POST",
 					url: "/add",
-					data: { "songID": songID },
+					data: { "songID": songID, "roomCode": roomCode },
 					success: function() {
 						console.log(e)
 						e.target.innerHTML = "Added!"

@@ -10,9 +10,16 @@ import (
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	songName := r.FormValue("songName")
+	roomCode := r.FormValue("roomCode")
 
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
+	
+	// Must be a guest in someone's room
+	if tok == nil {
+		// Get the token
+		tok = GetTokenFromCode(roomCode)
+	}
 
 	client := auth.NewClient(tok)
 
@@ -31,9 +38,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	songID := r.FormValue("songID")
+	roomCode := r.FormValue("roomCode")
 
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	// Must be a guest in someone's room
+	if tok == nil {
+		// Get the token
+		tok = GetTokenFromCode(roomCode)
+	}
 
 	client := auth.NewClient(tok)
 
@@ -63,9 +77,7 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	roomCode := r.PostForm["room-code"][0]
-	log.Printf("Room code %s", roomCode)
+	roomCode := r.FormValue("room-code")
 
 	// See if the room code exists
 	found := false
