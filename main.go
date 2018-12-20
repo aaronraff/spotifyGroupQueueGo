@@ -49,6 +49,7 @@ func main() {
 	http.HandleFunc("/search", SearchHandler)
 	http.HandleFunc("/add", AddToQueueHandler)
 	http.HandleFunc("/join", JoinRoomHandler)
+	http.HandleFunc("/room/", roomHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -127,3 +128,24 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code})
 }
 
+func roomHandler(w http.ResponseWriter, r *http.Request) {
+	roomCode := r.URL.Path[len("/room/"):]
+	
+	// See if the room code exists
+	found := false
+	for _, v := range Rooms {
+		if v.code == roomCode {
+			found = true
+			break
+		}
+	}
+
+	if !found {	
+		log.Printf("Room code %s not found.", roomCode)
+		return
+	}
+
+	log.Print("testing")
+	tmpl := template.Must(template.ParseFiles("profile.html"))
+	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode)})
+}
