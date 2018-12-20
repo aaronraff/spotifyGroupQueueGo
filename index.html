@@ -8,8 +8,13 @@
 	<body>
 		<h1> Spotify Group Queue </h1>
 		
-		<h3> First you need to authenticate with Spotify. </h3>
-		<a id="spotify-login" href="/login">Login</a>
+		<h3> Hosting a room? </h3>
+		<a id="spotify-login" href={{ . }}>Login with Spotify</a>
+
+		<h3> Joining a room? </h3>
+		<form id="joining-room" action="/join" method="POST">
+		<input type="text" name="roomCode" placeholder="Room Code">
+		<button type="submit">Join</button>
 	</body>
 
 </html>

@@ -61,3 +61,31 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(200)
 }
+
+func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	roomCode := r.PostForm["room-code"][0]
+	log.Printf("Room code %s", roomCode)
+
+	// See if the room code exists
+	found := false
+	for _, v := range Rooms {
+		if v.code == roomCode {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		log.Printf("Room code %s not found.", roomCode)
+		return
+	}
+
+	// Save the room code to this users session
+	session, _ := Store.Get(r, "groupQueue")
+	session.Values["roomCode"] = roomCode
+	session.Save(r, w)
+
+	// Redirect to that room	
+	http.Redirect(w, r, "/room/" + roomCode, http.StatusSeeOther)
+}

@@ -1,20 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"net/http"
 	"encoding/gob"
+	"crypto/rand"
 	"text/template"
+	"encoding/base64"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
 
-var aseUrl string
+type RoomInfo struct {
+	code string
+	tok* oauth2.Token
+}
+
 var key = []byte("test-key")
+
+var Rooms = make(map[string]RoomInfo)
 
 // Uppercase so it can be accessed by the api
 var Store = sessions.NewCookieStore(key)
@@ -40,7 +47,8 @@ func main() {
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
 	http.HandleFunc("/search", SearchHandler)
-	http.HandleFunc("/add", AddToQueueHandler )
+	http.HandleFunc("/add", AddToQueueHandler)
+	http.HandleFunc("/join", JoinRoomHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -55,8 +63,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if tok != nil {
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)	
 	} else {
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(w, "Please log into <a href=%s>Spotify</a>", url)	
+		tmpl := template.Must(template.ParseFiles("index.html"))
+		tmpl.Execute(w, url)
 	}
 }
 
@@ -100,6 +108,22 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 	user, _ := client.CurrentUser()
 
-	tmpl.Execute(w, user)
+	val, ok := Rooms[user.ID]
+	
+	if !ok {
+		// No room code exists for this user
+		// Generate one
+		code := make([]byte, 7)
+		rand.Read(code)
+
+		// Need to make it base64
+		str := base64.StdEncoding.EncodeToString(code)
+
+		// Need to cut off at 7 chars (base64 can be longer)
+		val = RoomInfo{str[:7], tok}
+		Rooms[user.ID] = val
+	}
+
+	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code})
 }
 

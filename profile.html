@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title> {{ .ID }}'s Profile </title>
+		<title> {{ .user.ID }}'s Profile </title>
 		<link rel="stylesheet" type="text/css" href="/static/profile.css">
 	</head>
 	<body>
@@ -11,7 +11,8 @@
 		</div>
 
 		<div class="content">
-			<h2 id="user-id"> {{ .ID }}'s Queue </h2>
+			<h2 id="user-id"> {{ .user.ID }}'s Queue </h2>
+			<h4> Room Code: {{ .code }} </h4>
 
 			<form id="search-form">
 				<input class="search-bar" placeholder="Song name">
