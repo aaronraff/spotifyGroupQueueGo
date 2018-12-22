@@ -1,0 +1,22 @@
+html {
+	font-family: sans-serif;
+}
+
+#app-name {
+	margin-top: 50px;
+	margin-bottom: 50px;
+	text-align: center;
+}
+
+#login {
+	text-align: center;
+}
+
+#joining-room button {
+	font-size: 16px;
+	margin-top: 10px;
+	padding: 10px 30px;
+	background-color: #1DB954;
+	border-radius: 20px;
+	cursor: pointer;
+}

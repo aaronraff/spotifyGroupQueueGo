@@ -24,12 +24,17 @@ var Rooms = make(map[string]RoomInfo)
 // Uppercase so it can be accessed by the api
 var Store = sessions.NewCookieStore(key)
 
-var redirectURI = "http://localhost:8080/spotify-callback"
+var redirectURI = os.Getenv("redirectURI")
 var auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic)
 var state = "testState"
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func init() {
+	// Used for heroku
+	if redirectURI == "" {
+		redirectURI = "http://localhost:8080/spotify-callback"
+	}
+
 	gob.Register(&oauth2.Token{})	
 }
 
