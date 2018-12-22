@@ -30,6 +30,7 @@ var auth spotify.Authenticator
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func init() {
+	// Used for heroku
 	if redirectURI == "" {
 		redirectURI = "http://localhost:8080/spotify-callback"
 	}
