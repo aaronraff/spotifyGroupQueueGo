@@ -17,7 +17,7 @@ type RoomInfo struct {
 	tok* oauth2.Token
 }
 
-var key = []byte("test-key")
+var key = []byte(os.Getenv("SESSION_KEY"))
 
 var Rooms = make(map[string]RoomInfo)
 
