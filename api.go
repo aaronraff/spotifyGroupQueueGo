@@ -88,24 +88,9 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := auth.NewClient(tok)
+	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
 
-	user, _ := client.CurrentUser()
-	playlists, err := client.GetPlaylistsForUser(user.ID)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var groupPlaylist *spotify.SimplePlaylist
-
-	for _, playlist := range playlists.Playlists {
-		if playlist.Name == "GroupQueue" {
-			groupPlaylist = &playlist			
-			break;
-		}
-	}
-
-	_, err = client.AddTracksToPlaylist(groupPlaylist.ID, spotify.ID(songID))
+	_, err := client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
 
 	if err != nil {
 		log.Fatal(err)

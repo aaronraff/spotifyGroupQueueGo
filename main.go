@@ -122,8 +122,12 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		val.code = "The room is not active."
 	}
 
+
+	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
+
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
-											"isActive": ok, "isOwner": true})
+											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks})
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +147,16 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the token
+	tok := GetTokenFromCode(roomCode)
+	
+	// Need a client to get the songs in the playlist
+	client := auth.NewClient(tok)
+
+	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
+
 	tmpl := template.Must(template.ParseFiles("profile.html"))
 	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode), 
-											"isActive": true, "isOwner": false})
+											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks})
 }

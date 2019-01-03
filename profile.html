@@ -28,6 +28,12 @@
 				<input id="room-code" type="hidden" value="{{ .code }}">
 			</form>
 
+			{{ range .queueSongs }}
+				<div class="queueSong">
+					<img src="{{ (index .Track.Album.Images 2).URL }}">
+				</div>
+			{{ end }}
+
 			<div id="song-container">
 			</div>
 		</div> <!-- .content -->
