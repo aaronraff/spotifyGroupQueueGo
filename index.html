@@ -3,21 +3,29 @@
 	<head>
 		<title>Spotify Group Queue</title>
 		<link rel="stylesheet" type="text/css" href="static/styles.css">
+		<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 	</head>
 
 	<body>
 		<h1 id="app-name"> Spotify Group Queue </h1>
 	
 		<div id="login">
-			<h3> Hosting a room? </h3>
-			<a id="spotify-login" href={{ . }}>Login with Spotify</a>
-
-			<h3> Joining a room? </h3>
-			<form id="joining-room" action="/join" method="POST">
-			<input type="text" name="room-code" placeholder="Room Code">
-			<br/>
-			<button type="submit">Join</button>
+			<div class="login-block">
+				<h3> Joining a Room? </h3>
+				<form id="joining-room" action="/join" method="POST">
+					<input type="text" name="room-code" placeholder="Room Code">
+				</form>
+			</div>
+			
+			<hr>
+			
+			<div class="login-block">
+				<h3> Hosting a Room? </h3>
+				<a id="spotify-login" href={{ . }}>Login with Spotify</a>
+			</div>
 		<div/>
+
+		<p id="made-by"> Made by Aaron Raff </p>
 	</body>
 
 </html>

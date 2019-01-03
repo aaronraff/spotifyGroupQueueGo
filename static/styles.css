@@ -1,22 +1,53 @@
 html {
-	font-family: sans-serif;
+	font-family: 'Roboto', sans-serif;
 }
 
 #app-name {
+	font-weight: bold;
 	margin-top: 50px;
-	margin-bottom: 50px;
+	margin-bottom: 20%;
 	text-align: center;
 }
 
 #login {
+	margin: 50px 100px;
 	text-align: center;
 }
 
-#joining-room button {
-	font-size: 16px;
+#login hr {
+	height: 3px;
+	background-color: #E5E5E5;
+	border: none;
+}
+
+.login-block {
+	margin: 20%  0px;
+}
+
+#joining-room input {
+	color: #E5E5E5;
+	border: solid #E5E5E5;
+	text-align: center;
+	font-size: 12px;
 	margin-top: 10px;
-	padding: 10px 30px;
-	background-color: #1DB954;
-	border-radius: 20px;
-	cursor: pointer;
+	padding: 10px 20px;
+	border-radius: 5px;
+}
+
+#spotify-login {
+	display: inline-block;
+	text-decoration: none;
+	color: black;
+	margin-top: 10px;
+	padding: 10px 20px;
+	background-color: #1ED760;
+	border-radius: 5px;
+}
+
+#made-by {
+	position: absolute;
+	display: inline-block;
+	left: 0;
+	right: 0;
+	bottom: 5%;
 }
