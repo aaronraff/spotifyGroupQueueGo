@@ -2,37 +2,46 @@
 <html>
 	<head>
 		<title> {{ .user.ID }}'s Profile </title>
-		<link rel="stylesheet" type="text/css" href="/static/profile.css">
+		<link rel="stylesheet" type="text/css" href="static/profile.css">
+		<link rel="stylesheet" type="text/css" href="static/styles.css">
 	</head>
 	<body>
-		<div id="header">
-			<h1 id="app-name"> Spotify Group Queue </h1>
+		<div class="header">
+			<h1 id="app-name-profile"> Spotify Group Queue </h1>
+
+			{{ if not .isActive }}
+				<a id="open-room"> <span>Open</span> the Room? </a>
+			{{ end }}
+
+
+			{{ if and .isActive .isOwner }}
+			<a id="close-room"> <span>Close</span> the Room? </a>
+			{{ end }}
+
 			<a id="logout" href="/logout"> Logout </a>
 		</div>
 
 		<div class="content">
-			<h2 id="user-id"> {{ .user.ID }}'s Queue </h2>
-			<h4> Room Code: {{ .code }} </h4>
-
-			{{ if not .isActive }}
-				<button id="open-room"> Open the room </button>
+			{{ if .isActive }}
+				<h3> Room Code: {{ .code }} </h3>
 			{{ end }}
 
-			{{ if and .isActive .isOwner }}
-				<button id="close-room"> Close the room </button>
-			{{ end }}
 
 
 			<form id="search-form">
 				<input class="search-bar" placeholder="Song name">
 				<input id="room-code" type="hidden" value="{{ .code }}">
 			</form>
-
-			{{ range .queueSongs }}
-				<div class="queueSong">
-					<img src="{{ (index .Track.Album.Images 2).URL }}">
-				</div>
-			{{ end }}
+	
+			<div id="queue-songs-container">
+				{{ range .queueSongs }}
+					<div class="queue-song">
+						<img src="{{ (index .Track.Album.Images 2).URL }}">
+						<h3> {{ .Track.Name }} </h3>
+						<p> {{ (index .Track.Artists 0).Name }} </p>
+					</div>
+				{{ end }}
+			</div>
 
 			<div id="song-container">
 			</div>

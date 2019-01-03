@@ -1,24 +1,29 @@
-* {
-	font-family: sans-serif;
+.header {
+	position: relative;
+	text-align: center;
 }
 
-html, body {
-	margin: 0px;
-	padding: 0px;
+.header #app-name-profile {
+	display: inline;
+}
+
+#open-room, #close-room {	
+	font-size: 18px;
+	text-decoration: none;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	left: 5%;
+	cursor: pointer;
+}
+
+#open-room span, #close-room span {
+	color: #1ED760;
 }
 
 .content {
 	margin: 20px 40px;
-}
-
-#header {
-	position: relative;
-	padding: 20px 40px;
-	background-color: #1DB954;
-}
-
-#app-name {
-	display: inline-block;
+	text-align: center;
 }
 
 .search-bar {
@@ -39,11 +44,11 @@ html, body {
 }
 
 #logout {
+	color: #1ED760;
 	font-size: 18px;
 	text-decoration: none;
-	color: black;
 	position: absolute;
 	top: 50%;
-	right: 10%;
 	transform: translateY(-50%);
+	right: 10%;
 }
