@@ -47,7 +47,7 @@ func main() {
 		port = "8080"
 	}
 	
-	http.HandleFunc("/", loginHandler);
+	http.HandleFunc("/login", loginHandler);
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
