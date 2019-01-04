@@ -126,3 +126,22 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect to that room	
 	http.Redirect(w, r, "/room/" + roomCode, http.StatusSeeOther)
 }
+
+func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {	
+	session, _ := Store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	client := auth.NewClient(tok)
+	user, _ := client.CurrentUser()
+
+	description := "Playlist for Spotify Group Queue written by Aaron Raff."
+
+	_, err := client.CreatePlaylistForUser(user.ID, "GroupQueue", description, true)
+
+	if err != nil {
+		w.WriteHeader(400)
+	} else {
+		// Success
+		w.WriteHeader(200)
+	}
+}

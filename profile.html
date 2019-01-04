@@ -10,13 +10,16 @@
 		<div class="header">
 			<h1 id="app-name-profile"> Spotify Group Queue </h1>
 
-			{{ if not .isActive }}
+			{{ if and (not .isActive) (not .playlistExists) (.isOwner) }}	
+				<a id="create-playlist"> No playlist. <span>Create</span> one? </a>
+			{{ end }}
+
+			{{ if and (not .isActive) (.playlistExists) (.isOwner) }}
 				<a id="open-room"> <span>Open</span> the Room? </a>
 			{{ end }}
 
-
 			{{ if and .isActive .isOwner }}
-			<a id="close-room"> <span>Close</span> the Room? </a>
+				<a id="close-room"> <span>Close</span> the Room? </a>
 			{{ end }}
 
 			<a id="logout" href="/logout"> Logout </a>
@@ -40,7 +43,7 @@
 				{{ end }}
 			</div>
 
-			<div id="search-modal">
+			<div id="search-modal" class="modal">
 				<form id="search-form">
 					<input class="search-bar" placeholder="Song name">
 					<input id="room-code" type="hidden" value="{{ .code }}">
@@ -115,7 +118,19 @@
 				});
 			}
 
-			$("#open-room").click(openRoom)
+			$("#create-playlist").click(createPlaylist);
+
+			function createPlaylist() {
+				$.ajax({
+					type: "POST",
+					url: "/playlist/create",
+					success: function() {
+						location.reload();
+					}
+				});
+			}
+
+			$("#open-room").click(openRoom);
 			
 			function openRoom() {
 				$.ajax({
@@ -141,7 +156,7 @@
 
 			$("#open-search-modal").click(openSearchModal);
 
-			function openSearchModal() {
+			function openModal(modalId) {
 				$(".modal-bg").show(500);
 				$("#search-modal").show(500);
 			}

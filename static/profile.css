@@ -11,7 +11,7 @@
 	display: inline;
 }
 
-#open-room, #close-room {	
+#open-room, #close-room, #create-playlist {	
 	font-size: 18px;
 	text-decoration: none;
 	position: absolute;
@@ -21,7 +21,7 @@
 	cursor: pointer;
 }
 
-#open-room span, #close-room span {
+#open-room span, #close-room span, #create-playlist span {
 	color: #1ED760;
 }
 

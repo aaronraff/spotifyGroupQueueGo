@@ -58,6 +58,7 @@ func main() {
 	http.HandleFunc("/room/open", OpenRoomHandler)
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
+	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -136,10 +137,20 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
-	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
+	playlistExists := true
+	queueSongs := new(spotify.PlaylistTrackPage)
+
+	// No playlist exists with that name
+	if groupPlaylistId == "" {
+		playlistExists = false
+		queueSongs.Tracks = make([]spotify.PlaylistTrack, 0)
+	} else {
+		queueSongs, _ = client.GetPlaylistTracks(groupPlaylistId)
+	}
 
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
-											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks})
+											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks,
+											"playlistExists": playlistExists})
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
