@@ -23,29 +23,30 @@
 
 		<div class="content">
 			{{ if .isActive }}
-				<h3> Room Code: {{ .code }} </h3>
+				<h3> Room Code: {{ .code }} </h3>	
+				<a class="cta-btn"> Add to the Queue </a>
 			{{ end }}
-
-
-
-			<form id="search-form">
-				<input class="search-bar" placeholder="Song name">
-				<input id="room-code" type="hidden" value="{{ .code }}">
-			</form>
 	
 			<div id="queue-songs-container">
 				{{ range .queueSongs }}
 					<div class="queue-song">
-						<img src="{{ (index .Track.Album.Images 2).URL }}">
+						<img src="{{ (index .Track.Album.Images 1).URL }}">
 						<div class="details">
-							<h4> {{ .Track.Name }} </h4>
+							<h3> {{ .Track.Name }} </h3>
 							<p> {{ (index .Track.Artists 0).Name }} </p>
 						</div>
 					</div>
 				{{ end }}
 			</div>
 
-			<div id="song-container">
+			<div id="search-modal">
+				<form id="search-form">
+					<input class="search-bar" placeholder="Song name">
+					<input id="room-code" type="hidden" value="{{ .code }}">
+				</form>
+
+				<div id="song-container">
+				</div>
 			</div>
 		</div> <!-- .content -->
 

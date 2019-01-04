@@ -34,7 +34,7 @@ html {
 	border-radius: 5px;
 }
 
-#spotify-login {
+.cta-btn {
 	display: inline-block;
 	text-decoration: none;
 	color: black;
