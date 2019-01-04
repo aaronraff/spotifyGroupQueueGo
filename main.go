@@ -10,6 +10,8 @@ import (
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"math/rand"
+	"encoding/base64"
 )
 
 type RoomInfo struct {
@@ -25,7 +27,6 @@ var Rooms = make(map[string]RoomInfo)
 var Store = sessions.NewCookieStore(key)
 
 var redirectURI = os.Getenv("redirectURI")
-var state = "testState"
 var auth spotify.Authenticator
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
@@ -61,8 +62,6 @@ func main() {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	url := auth.AuthURL(state)
-
 	session, _ := Store.Get(r, "groupQueue")
 	tok := session.Values["token"]
 
@@ -70,6 +69,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if tok != nil {
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)	
 	} else {
+		// CSRF Protection with state
+		b := make([]byte, 20)
+		rand.Read(b)
+		state := base64.StdEncoding.EncodeToString(b)
+
+		session.Values["state"] = state
+		session.Save(r, w)
+
+		url := auth.AuthURL(state)
+
 		tmpl := template.Must(template.ParseFiles("index.html"))
 		tmpl.Execute(w, url)
 	}
@@ -86,20 +95,22 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := Store.Get(r, "groupQueue")
+	state, _ := session.Values["state"].(string)
+
 	tok, err := auth.Token(state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
 	}
 	
+	// CSRF Protection with state
 	st := r.FormValue("state")
 	if st != state {
 		http.NotFound(w, r)
 		log.Fatal("State mismatch.")
 	}
 
-
-	session, _ := Store.Get(r, "groupQueue")
 	session.Values["token"] = tok
 	session.Save(r, w)
 

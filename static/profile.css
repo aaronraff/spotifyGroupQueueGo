@@ -74,18 +74,6 @@
 	margin: 15px 0px;
 }
 
-.search-bar {
-	color: #000000;
-	font-size: 18px;
-	font-weight: bold;
-	padding: 10px 20px;
-	border-radius: 5px;
-	border: solid 2px #000000;
-	width: 50%;
-	margin-top: 20px;
-	outline: none;
-}
-
 .song-item {
 	margin-bottom: 40px;
 }
@@ -109,6 +97,18 @@
 	border-radius: 10px;
 	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
 	z-index: 999;
+}
+
+.search-bar {
+	color: #000000;
+	font-size: 18px;
+	font-weight: bold;
+	padding: 10px 20px;
+	border-radius: 5px;
+	border: solid 2px #000000;
+	width: 50%;
+	margin-top: 30px;
+	outline: none;
 }
 
 .add {
