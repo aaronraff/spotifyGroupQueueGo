@@ -28,6 +28,8 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 	val := RoomInfo{str[:7], tok}
 	Rooms[user.ID] = val
 
+	go PollPlayerForRemoval(&client)
+
 	// Success
 	w.WriteHeader(200)
 }
@@ -88,7 +90,7 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := auth.NewClient(tok)
-	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 
 	_, err := client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
 

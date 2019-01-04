@@ -36,7 +36,8 @@ func init() {
 		redirectURI = "http://localhost:8080/spotify-callback"
 	}
 	
-	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic)
+	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic,
+									spotify.ScopeUserReadCurrentlyPlaying)
 	gob.Register(&oauth2.Token{})	
 }
 
@@ -134,7 +135,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
@@ -164,7 +165,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	// Need a client to get the songs in the playlist
 	client := auth.NewClient(tok)
 
-	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
 	tmpl := template.Must(template.ParseFiles("profile.html"))
