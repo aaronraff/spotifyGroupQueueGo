@@ -89,6 +89,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	client := auth.NewClient(tok)
+	user, _ := client.CurrentUser()
+
+	// Remove the room from the map
+	delete(Rooms, user.ID)
 
 	// Invalidate session
 	session.Options.MaxAge = -1

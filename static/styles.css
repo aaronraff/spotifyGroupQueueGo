@@ -56,12 +56,9 @@ html {
 	background-color: rgba(0, 0, 0, 0.4);
 }
 
-#made-by {
-	position: absolute;
-	display: inline-block;
-	left: 0;
-	right: 0;
-	bottom: 5%;
+footer {
+	height: 50px;
+	text-align: center;
 }
 
 .modal {
