@@ -59,6 +59,7 @@ func main() {
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
+	http.Handle("/", http.FileServer(http.Dir("./")))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -125,6 +126,18 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
+	log.Println(tok)
+
+	isLoggedIn := false
+
+	if tok != nil {
+		isLoggedIn = true
+	} else {
+		// Need to login to see the profile page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	client := auth.NewClient(tok)
 	user, _ := client.CurrentUser()
 
@@ -150,10 +163,19 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
 											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks,
-											"playlistExists": playlistExists})
+											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn })
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := Store.Get(r, "groupQueue")
+	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	isLoggedIn := false
+
+	if tok != nil {
+		isLoggedIn = true
+	}
+
 	roomCode := r.URL.Path[len("/room/"):]
 	
 	// See if the room code exists
@@ -167,11 +189,12 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !found {	
 		log.Printf("Room code %s not found.", roomCode)
+		http.Redirect(w, r, "/room-not-found.html", http.StatusSeeOther)
 		return
 	}
 
 	// Get the token
-	tok := GetTokenFromCode(roomCode)
+	tok = GetTokenFromCode(roomCode)
 	
 	// Need a client to get the songs in the playlist
 	client := auth.NewClient(tok)
@@ -180,6 +203,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
 	tmpl := template.Must(template.ParseFiles("profile.html"))
-	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {"test"}, "code": string(roomCode), 
-											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks})
+	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {string(roomCode)}, "code": string(roomCode), 
+											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks,
+											"playlistExists": false, "isLoggedIn": isLoggedIn })
 }

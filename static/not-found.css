@@ -1,0 +1,10 @@
+#not-found-content {
+	display: inline-block;
+	position: absolute;
+	max-width: 500px;
+	margin: auto;
+	top: 50%;
+	left: 0;
+	right: 0;
+	transform: translateY(-50%);
+}

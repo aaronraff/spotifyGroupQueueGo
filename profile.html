@@ -2,8 +2,8 @@
 <html>
 	<head>
 		<title> {{ .user.ID }}'s Profile </title>
-		<link rel="stylesheet" type="text/css" href="static/profile.css">
-		<link rel="stylesheet" type="text/css" href="static/styles.css">
+		<link rel="stylesheet" type="text/css" href="/static/profile.css">
+		<link rel="stylesheet" type="text/css" href="/static/styles.css">
 	</head>
 	<body>
 		<div class="modal-bg"></div>
@@ -21,8 +21,10 @@
 			{{ if and .isActive .isOwner }}
 				<a id="close-room"> <span>Close</span> the Room? </a>
 			{{ end }}
-
-			<a id="logout" href="/logout"> Logout </a>
+			
+			{{ if .isLoggedIn }}
+				<a id="logout" href="/logout"> Logout </a>
+			{{ end }}
 		</div>
 
 		<div class="content">
@@ -156,15 +158,15 @@
 
 			$("#open-search-modal").click(openSearchModal);
 
-			function openModal(modalId) {
+			function openSearchModal() {
 				$(".modal-bg").show(500);
 				$("#search-modal").show(500);
 			}
 
 			// Catch click outside of the modal
-			$(".modal-bg").click(closeModal);
+			$(".modal-bg").click(closeSearchModal);
 
-			function closeModal() {	
+			function closeSearchModal() {	
 				$(".modal-bg").hide(500);
 				$("#search-modal").hide(500);
 			}
