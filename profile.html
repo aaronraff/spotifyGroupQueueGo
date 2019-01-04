@@ -37,8 +37,10 @@
 				{{ range .queueSongs }}
 					<div class="queue-song">
 						<img src="{{ (index .Track.Album.Images 2).URL }}">
-						<h3> {{ .Track.Name }} </h3>
-						<p> {{ (index .Track.Artists 0).Name }} </p>
+						<div class="details">
+							<h4> {{ .Track.Name }} </h4>
+							<p> {{ (index .Track.Artists 0).Name }} </p>
+						</div>
 					</div>
 				{{ end }}
 			</div>
