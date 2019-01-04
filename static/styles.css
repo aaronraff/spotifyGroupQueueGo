@@ -42,6 +42,7 @@ html {
 	padding: 10px 20px;
 	background-color: #1ED760;
 	border-radius: 5px;
+	cursor: pointer;
 }
 
 #made-by {

@@ -3,6 +3,8 @@
 	text-align: center;
 	margin-top: 50px;
 	margin-bottom: 5%;
+	margin-left: 50px;
+	margin-right: 50px;
 }
 
 .header #app-name-profile {
@@ -15,12 +17,22 @@
 	position: absolute;
 	top: 50%;
 	transform: translateY(-50%);
-	left: 5%;
+	left: 0;
 	cursor: pointer;
 }
 
 #open-room span, #close-room span {
 	color: #1ED760;
+}
+
+#logout {
+	color: #1ED760;
+	font-size: 18px;
+	text-decoration: none;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	right: 0;
 }
 
 .content {
@@ -33,8 +45,9 @@
 	height: 100px;
 	text-align: left;
 	padding: 0;
-	margin: 20px 75px;
+	margin: 40px auto;
 	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+	max-width: 500px;
 }
 
 .queue-song img {
@@ -78,16 +91,11 @@
 	margin-right: 20px;
 }
 
-#logout {
-	color: #1ED760;
-	font-size: 18px;
-	text-decoration: none;
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-	right: 10%;
-}
-
 #search-modal {
 	display: none;
+	position: absolute;
+	top: 50%;
+	left: 0;
+	right: 0;
+	transform: translateY(-50%);
 }

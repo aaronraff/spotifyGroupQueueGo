@@ -24,7 +24,7 @@
 		<div class="content">
 			{{ if .isActive }}
 				<h3> Room Code: {{ .code }} </h3>	
-				<a class="cta-btn"> Add to the Queue </a>
+				<a id="open-search-modal" class="cta-btn"> Add to the Queue </a>
 			{{ end }}
 	
 			<div id="queue-songs-container">
@@ -58,7 +58,7 @@
 
 		<script>
 			// Used in multiple functions and is constant
-			var roomCode = $("#room-code").val()
+			var roomCode = $("#room-code").val();
 
 			$("#search-form").submit(searchSubmit);
 
@@ -109,7 +109,7 @@
 						e.target.innerHTML = "Added!"
 						e.target.style.backgroundColor = '#1DB954';
 					}
-				})
+				});
 			}
 
 			$("#open-room").click(openRoom)
@@ -121,10 +121,10 @@
 					success: function() {
 						location.reload();
 					}
-				})
+				});
 			}
 
-			$("#close-room").click(closeRoom)
+			$("#close-room").click(closeRoom);
 			
 			function closeRoom() {
 				$.ajax({
@@ -133,8 +133,15 @@
 					success: function() {
 						location.reload();
 					}
-				})
+				});
 			}
+
+			$("#open-search-modal").click(openSearchModal);
+
+			function openSearchModal() {
+				$("#search-modal").show(500);
+			}
+
 		</script>
 	</body>
 </html>
