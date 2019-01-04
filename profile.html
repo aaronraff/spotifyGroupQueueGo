@@ -6,6 +6,7 @@
 		<link rel="stylesheet" type="text/css" href="static/styles.css">
 	</head>
 	<body>
+		<div class="modal-bg"></div>
 		<div class="header">
 			<h1 id="app-name-profile"> Spotify Group Queue </h1>
 
@@ -82,11 +83,13 @@
 
 				for(var i = 0; i < 10; i++) {
 					var item = resultData[i]
-					var elem = $("<div class='song-item'>" +
+					var elem = $("<div class='queue-song'>" +
 									"<img src=" + item.album.images[2].url + ">" +
-									"<h3>" + item.name + "</h3>" +
-									"<p>" + item.artists[0].name + "</p>" +
-									"<button class='add' id=" + item.id + ">" + "Add to queue </button" +
+									"<div class='details'>" +
+										"<h3>" + item.name + "</h3>" +
+										"<p>" + item.artists[0].name + "</p>" +
+									"</div>" +
+									"<a class='cta-btn add' id=" + item.id + ">" + "Add </a>" +
 								  "</div>"
 								);
 
@@ -139,7 +142,16 @@
 			$("#open-search-modal").click(openSearchModal);
 
 			function openSearchModal() {
+				$(".modal-bg").show(500);
 				$("#search-modal").show(500);
+			}
+
+			// Catch click outside of the modal
+			$(".modal-bg").click(closeModal);
+
+			function closeModal() {	
+				$(".modal-bg").hide(500);
+				$("#search-modal").hide(500);
 			}
 
 		</script>

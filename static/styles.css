@@ -38,11 +38,22 @@ html {
 	display: inline-block;
 	text-decoration: none;
 	color: black;
-	margin-top: 10px;
 	padding: 10px 20px;
 	background-color: #1ED760;
 	border-radius: 5px;
 	cursor: pointer;
+}
+
+.modal-bg {
+	display: none;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	/* Right under modal */
+	z-index: 990;
+	background-color: rgba(0, 0, 0, 0.4);
 }
 
 #made-by {
