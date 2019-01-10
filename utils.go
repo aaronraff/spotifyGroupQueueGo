@@ -46,21 +46,25 @@ func PollPlayerForRemoval(client *spotify.Client) {
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
 
+		// Nothing is currently being played
+		if currPlaying == nil {
+			// Wait for something to be playing
+			time.Sleep(2 * time.Minute)
+			continue
+		}
+
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
 		if currPlaying.Item.ID != lastPlaying.Item.ID {
-			log.Println("removing")
-
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
 		}
 
 		timeLeft := currPlaying.Item.Duration - currPlaying.Progress
-		log.Println(timeLeft)
 		time.Sleep(time.Duration(timeLeft) * time.Millisecond)
 		lastPlaying = currPlaying
 		retryCount++

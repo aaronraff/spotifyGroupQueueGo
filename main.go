@@ -133,8 +133,6 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
-	log.Println(tok)
-
 	isLoggedIn := false
 
 	if tok != nil {
