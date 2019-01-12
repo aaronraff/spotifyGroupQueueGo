@@ -48,7 +48,7 @@ func main() {
 		port = "8080"
 	}
 	
-	http.HandleFunc("/login", loginHandler);
+	http.HandleFunc("/", loginHandler);
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
@@ -59,7 +59,6 @@ func main() {
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
-	http.Handle("/", http.FileServer(http.Dir("./")))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
@@ -82,7 +81,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		url := auth.AuthURL(state)
 
-		tmpl := template.Must(template.ParseFiles("index.html"))
+		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 		tmpl.Execute(w, url)
 	}
 }
@@ -101,7 +100,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	session.Options.MaxAge = -1
 	session.Save(r, w)
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +138,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		isLoggedIn = true
 	} else {
 		// Need to login to see the profile page
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -194,7 +193,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !found {	
 		log.Printf("Room code %s not found.", roomCode)
-		http.Redirect(w, r, "/room-not-found.html", http.StatusSeeOther)
+		http.Redirect(w, r, "/static/room-not-found.html", http.StatusSeeOther)
 		return
 	}
 

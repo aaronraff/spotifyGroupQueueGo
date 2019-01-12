@@ -115,7 +115,7 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !found {
 		log.Printf("Room code %s not found.", roomCode)
-		http.Redirect(w, r, "/room-not-found.html", http.StatusSeeOther)
+		http.Redirect(w, r, "/static/room-not-found.html", http.StatusSeeOther)
 		return
 	}
 
