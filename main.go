@@ -128,7 +128,7 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("profile.html"))
+	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
@@ -207,7 +207,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
-	tmpl := template.Must(template.ParseFiles("profile.html"))
+	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {string(roomCode)}, "code": string(roomCode), 
 											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks,
 											"playlistExists": false, "isLoggedIn": isLoggedIn })
