@@ -49,6 +49,7 @@ func main() {
 	}
 	
 	http.HandleFunc("/", loginHandler);
+	http.HandleFunc("/favicon.ico", faviconHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
 	http.HandleFunc("/profile", profileHandler)
@@ -63,7 +64,12 @@ func main() {
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
 
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "favicon.ico")
+}
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println(r)
 	session, _ := Store.Get(r, "groupQueue")
 	tok := session.Values["token"]
 
