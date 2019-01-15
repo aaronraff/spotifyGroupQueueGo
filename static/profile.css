@@ -2,7 +2,6 @@
 	position: relative;
 	text-align: center;
 	margin-top: 50px;
-	margin-bottom: 5%;
 	margin-left: 50px;
 	margin-right: 50px;
 }
@@ -100,4 +99,17 @@
 	top: 50%;
 	transform: translateY(-50%);
 	right: 20px;
+}
+
+@media screen and (max-width: 900px) {	
+	.header, .content {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+
+	#open-room, #close-room, #create-playlist, #logout {	
+		position: relative;
+		display: block;
+		margin-top: 20px;
+	}
 }
