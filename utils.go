@@ -76,7 +76,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 
 		// Add 1 sec as a buffer
-		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 60
+		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 1000
 		log.Println(timeLeft)
 		time.Sleep(time.Duration(timeLeft) * time.Millisecond)
 		lastPlaying = currPlaying
