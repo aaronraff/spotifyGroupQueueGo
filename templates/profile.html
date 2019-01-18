@@ -36,9 +36,9 @@
 	
 			<div id="queue-songs-container">
 				{{ range .queueSongs }}
-					<div class="queue-song">
+					<div class="queue-song" id="{{ .Track.ID }}">
 						<img src="{{ (index .Track.Album.Images 1).URL }}">
-						<div class="details">
+						<div class="details"> 
 							<h3> {{ .Track.Name }} </h3>
 							<p> {{ (index .Track.Artists 0).Name }} </p>
 						</div>
@@ -72,8 +72,17 @@
 			window.onload = function() {
 				var conn = new WebSocket("ws://" + "localhost:8080" + "/ws?roomCode={{ .code }}");
 				conn.onmessage = function(msg) {
-					console.log(JSON.parse(msg.data))
-					appendToSongList(JSON.parse(msg.data))
+					var j = JSON.parse(msg.data);
+					console.log(j)
+
+					switch(j.type) {
+						case 'addition':
+							appendToSongList(j.track);
+							break;
+						case 'removal':
+							removeSongFromSongList(j.trackID);
+							break;
+					}
 				}
 			}
 		</script>

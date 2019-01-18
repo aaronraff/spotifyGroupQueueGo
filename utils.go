@@ -4,7 +4,9 @@ import (
 	"golang.org/x/oauth2"
 	"github.com/zmb3/spotify"
 	"log"
+	"encoding/json"
 	"time"
+	"spotifyGroupQueueGo/wsHub"
 )
 
 func GetTokenFromCode(roomCode string) *oauth2.Token {
@@ -35,7 +37,7 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 	return ""
 }
 
-func PollPlayerForRemoval(client *spotify.Client) {
+func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 
@@ -62,15 +64,27 @@ func PollPlayerForRemoval(client *spotify.Client) {
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
+			msg := map[string]string { "type": "removal", "trackID": string(lastPlaying.Item.ID) }
+			j, err := json.Marshal(msg)
+			
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			log.Println(msg)
+			hub.Broadcast(j, roomCode)
 		}
 
-		timeLeft := currPlaying.Item.Duration - currPlaying.Progress
+		// Add 1 sec as a buffer
+		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 60
+		log.Println(timeLeft)
 		time.Sleep(time.Duration(timeLeft) * time.Millisecond)
 		lastPlaying = currPlaying
 		retryCount++
 
 		// Stop trying to remove tracks
 		if retryCount > 5 {
+			log.Println("Retry count reached, done polling.")
 			return
 		}
 	}

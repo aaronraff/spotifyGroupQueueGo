@@ -59,7 +59,9 @@ func main() {
 	http.HandleFunc("/search", SearchHandler)
 	http.HandleFunc("/add", AddToQueueHandler)
 	http.HandleFunc("/join", JoinRoomHandler)
-	http.HandleFunc("/room/open", OpenRoomHandler)
+	http.HandleFunc("/room/open", func(w http.ResponseWriter, r *http.Request) {
+		OpenRoomHandler(WsHub, w, r)
+	})
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)

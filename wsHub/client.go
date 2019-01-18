@@ -8,7 +8,7 @@ import (
 )
 
 type Client struct {
-	hub *hub
+	hub *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -34,7 +34,7 @@ func (client *Client) writer(roomCode string) {
 	}
 }
 
-func WsHandler(hub *hub, w http.ResponseWriter, r *http.Request) {
+func WsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {

@@ -8,9 +8,10 @@ import (
 	"encoding/json"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+	"spotifyGroupQueueGo/wsHub"
 )
 
-func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
+func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
@@ -28,7 +29,7 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 	val := RoomInfo{str[:7], tok}
 	Rooms[user.ID] = val
 
-	go PollPlayerForRemoval(&client)
+	go PollPlayerForRemoval(&client, str[:7], hub)
 
 	// Success
 	w.WriteHeader(200)
@@ -101,7 +102,8 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	track, err := client.GetTrack(spotify.ID(songID))
-	j, err := json.Marshal(track)
+	msg := map[string]interface{} { "type": "addition", "track": track }
+	j, err := json.Marshal(msg)
 	
 	if err != nil {
 		log.Fatal(err)
