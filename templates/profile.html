@@ -69,10 +69,12 @@
 
 		{{ if .isActive }}
 		<script>
-			var conn = new WebSocket("ws://" + "localhost:8080" + "/ws?roomCode={{ .code }}");
-			conn.onmessage = function(msg) {
-				console.log(JSON.parse(msg.data))
-				appendToSongList(JSON.parse(msg.data))
+			window.onload = function() {
+				var conn = new WebSocket("ws://" + "localhost:8080" + "/ws?roomCode={{ .code }}");
+				conn.onmessage = function(msg) {
+					console.log(JSON.parse(msg.data))
+					appendToSongList(JSON.parse(msg.data))
+				}
 			}
 		</script>
 		{{ end }}

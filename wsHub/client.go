@@ -4,6 +4,7 @@ import (
 	"log"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -14,11 +15,22 @@ type Client struct {
 
 var upgrader = websocket.Upgrader{}
 
-func (client *Client) writer() {
+func (client *Client) writer(roomCode string) {
+	ticker := time.NewTicker(60 * time.Second)
+
 	for {
-		// Block until there is a message
-		message := <-client.send
-		client.conn.WriteMessage(websocket.TextMessage, message)
+		select {
+			// Block until there is a message
+			case message := <-client.send:
+				client.conn.WriteMessage(websocket.TextMessage, message)
+			// Ping the client to see if they're still there
+			case <-ticker.C:
+				if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					ticker.Stop()
+					client.conn.Close()
+					client.hub.removeConnection(client, roomCode)
+				}
+		}
 	}
 }
 
@@ -37,5 +49,5 @@ func WsHandler(hub *hub, w http.ResponseWriter, r *http.Request) {
 	
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	client.hub.addConnection(client, roomCode)
-	go client.writer()
+	go client.writer(roomCode)
 }
