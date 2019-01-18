@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"math/rand"
 	"encoding/base64"
+	"spotifyGroupQueueGo/wsHub"
 )
 
 type RoomInfo struct {
@@ -28,6 +29,8 @@ var Store = sessions.NewCookieStore(key)
 
 var redirectURI = os.Getenv("redirectURI")
 var auth spotify.Authenticator
+
+var WsHub = wsHub.NewHub()
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func init() {
@@ -60,6 +63,9 @@ func main() {
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		wsHub.WsHandler(WsHub, w, r)
+	})
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }

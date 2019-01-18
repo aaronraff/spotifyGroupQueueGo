@@ -36,8 +36,21 @@ function updateSongList(resultData) {
 		$("#song-container").append(elem);
 	}
 
-$(".add").click(addToQueue);
+	$(".add").click(addToQueue);
 
+}
+
+function appendToSongList(item) {
+	var elem = $("<div class='queue-song'>" +
+					"<img src=" + item.album.images[2].url + ">" +
+					"<div class='details'>" +
+						"<h3>" + item.name + "</h3>" +
+						"<p>" + item.artists[0].name + "</p>" +
+					"</div>" +
+				  "</div>"
+				);
+
+	$("#queue-songs-container").append(elem);
 }
 
 function addToQueue(e) {

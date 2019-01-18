@@ -95,9 +95,19 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
 
 	if err != nil {
+		log.Println(err)
+		w.WriteHeader(400)
+		return
+	}
+	
+	track, err := client.GetTrack(spotify.ID(songID))
+	j, err := json.Marshal(track)
+	
+	if err != nil {
 		log.Fatal(err)
 	}
 
+	WsHub.Broadcast(j, roomCode)
 	w.WriteHeader(200)
 }
 

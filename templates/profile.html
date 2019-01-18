@@ -67,6 +67,17 @@
 		  crossorigin="anonymous">
 		</script>
 
+		{{ if .isActive }}
+		<script>
+			var conn = new WebSocket("ws://" + "localhost:8080" + "/ws?roomCode={{ .code }}");
+			conn.onmessage = function(msg) {
+				console.log(JSON.parse(msg.data))
+				appendToSongList(JSON.parse(msg.data))
+			}
+		</script>
+		{{ end }}
+
 		<script type="text/javascript" src="/static/profile.js"></script>
+
 	</body>
 </html>
