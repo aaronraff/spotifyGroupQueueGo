@@ -32,6 +32,14 @@
 			{{ if .isActive }}
 				<h3> Room Code: {{ .code }} </h3>	
 				<a id="open-search-modal" class="cta-btn"> Add to the Queue </a>
+
+				{{ if .hasVetoed }}
+					<a id="veto-song" class="cta-btn"> Voted! </a>
+				{{ end }}
+				
+				{{ if not .hasVetoed }}
+					<a id="veto-song" class="cta-btn"> Veto Current Song </a>
+				{{ end }}
 			{{ end }}
 	
 			<div id="queue-songs-container">
@@ -46,15 +54,17 @@
 				{{ end }}
 			</div>
 
-			<div id="search-modal">
-				<form id="search-form">
-					<input class="search-bar" placeholder="Song name">
-					<input id="room-code" type="hidden" value="{{ .code }}">
-				</form>
+			{{ if .isActive }}
+				<div id="search-modal">
+					<form id="search-form">
+						<input class="search-bar" placeholder="Song name">
+						<input id="room-code" type="hidden" value="{{ .code }}">
+					</form>
 
-				<div id="song-container">
+					<div id="song-container">
+					</div>
 				</div>
-			</div>
+		{{ end }}
 		</div> <!-- .content -->
 
 		<footer>

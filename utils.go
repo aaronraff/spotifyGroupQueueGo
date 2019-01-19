@@ -37,7 +37,7 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 	return ""
 }
 
-func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub) {
+func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 
@@ -75,12 +75,19 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			hub.Broadcast(j, roomCode)
 		}
 
+		
 		// Add 1 sec as a buffer
 		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 1000
-		log.Println(timeLeft)
-		time.Sleep(time.Duration(timeLeft) * time.Millisecond)
-		lastPlaying = currPlaying
-		retryCount++
+
+		select {
+			case <-time.After(time.Duration(timeLeft) * time.Millisecond):
+				lastPlaying = currPlaying
+				retryCount++
+			case <-notifyChan:
+				// The song has been vetoed, skip it
+				client.Next()
+				continue
+		}
 
 		// Stop trying to remove tracks
 		if retryCount > 5 {

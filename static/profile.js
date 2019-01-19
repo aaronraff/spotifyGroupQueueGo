@@ -127,3 +127,19 @@ function closeSearchModal() {
 	$(".modal-bg").hide(500);
 	$("#search-modal").hide(500);
 }
+
+$("#veto-song").click(vetoSong);
+
+function vetoSong() {
+	$.ajax({
+		type: "POST",
+		url: "/room/veto",
+		data: { "roomCode": roomCode },
+		success: function() {
+			$("#veto-song").html("Voted!");
+
+			// Don't allow the button to be clicked again
+			$("#veto-song").off('click');
+		}
+	});
+}

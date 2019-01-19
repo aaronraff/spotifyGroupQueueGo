@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"encoding/base64"
 	"spotifyGroupQueueGo/wsHub"
+	"spotifyGroupQueueGo/userStore"
 )
 
 type RoomInfo struct {
@@ -31,6 +32,7 @@ var redirectURI = os.Getenv("redirectURI")
 var auth spotify.Authenticator
 
 var WsHub = wsHub.NewHub()
+var UStore = userStore.NewStore()
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func init() {
@@ -63,10 +65,11 @@ func main() {
 		OpenRoomHandler(WsHub, w, r)
 	})
 	http.HandleFunc("/room/close", CloseRoomHandler)
+	http.HandleFunc("/room/veto", VetoHandler)
 	http.HandleFunc("/room/", roomHandler)
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		wsHub.WsHandler(WsHub, w, r)
+		wsHub.WsHandler(WsHub, Store, UStore,  w, r)
 	})
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
@@ -164,6 +167,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		// No room code exists for this user
 		val.code = "The room is not active."
+	} else {
+		// Add this user to the store
+		if !UStore.UserExists(session.ID, val.code) {
+			UStore.AddUser(session.ID, val.code)
+		}
 	}
 
 
@@ -179,9 +187,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		queueSongs, _ = client.GetPlaylistTracks(groupPlaylistId)
 	}
 
+	hasVetoed := UStore.UserHasVoted(session.ID, val.code)
+
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
 											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks,
-											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn })
+											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed })
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
@@ -220,8 +230,15 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
+	// Add this user to the store
+	if !UStore.UserExists(session.ID, roomCode) {
+		UStore.AddUser(session.ID, roomCode)
+	}
+
+	hasVetoed := UStore.UserHasVoted(session.ID, roomCode)
+
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {string(roomCode)}, "code": string(roomCode), 
 											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks,
-											"playlistExists": false, "isLoggedIn": isLoggedIn })
+											"playlistExists": false, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed })
 }

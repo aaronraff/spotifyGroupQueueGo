@@ -3,8 +3,10 @@ package wsHub
 import (
 	"log"
 	"github.com/gorilla/websocket"
+	"github.com/gorilla/sessions"
 	"net/http"
 	"time"
+	"spotifyGroupQueueGo/userStore"
 )
 
 type Client struct {
@@ -15,7 +17,7 @@ type Client struct {
 
 var upgrader = websocket.Upgrader{}
 
-func (client *Client) writer(roomCode string) {
+func (client *Client) writer(roomCode string, store *userStore.Store, id string) {
 	ticker := time.NewTicker(60 * time.Second)
 
 	for {
@@ -29,12 +31,15 @@ func (client *Client) writer(roomCode string) {
 					ticker.Stop()
 					client.conn.Close()
 					client.hub.removeConnection(client, roomCode)
+
+					// We don't want to count them in the total user count (for veting)
+					store.RemoveUser(id, roomCode)
 				}
 		}
 	}
 }
 
-func WsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store,  w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -45,9 +50,10 @@ func WsHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// Need the room code to send out messages based on room
 	q := r.URL.Query()
 	roomCode := q.Get("roomCode")
-	log.Println(roomCode)
+
+	session, _ := cStore.Get(r, "groupQueue")
 	
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	client.hub.addConnection(client, roomCode)
-	go client.writer(roomCode)
+	go client.writer(roomCode, uStore, session.ID)
 }

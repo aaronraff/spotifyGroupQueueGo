@@ -26,10 +26,14 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	str := base64.StdEncoding.EncodeToString(code)
 
 	// Need to cut off at 7 chars (base64 can be longer)
-	val := RoomInfo{str[:7], tok}
+	roomCode := str[:7]
+
+	val := RoomInfo{roomCode, tok}
 	Rooms[user.ID] = val
 
-	go PollPlayerForRemoval(&client, str[:7], hub)
+	notifyChan := UStore.AddChannel(roomCode)
+
+	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
 
 	// Success
 	w.WriteHeader(200)
@@ -157,4 +161,13 @@ func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		// Success
 		w.WriteHeader(200)
 	}
+}
+
+func VetoHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := Store.Get(r, "groupQueue")
+	roomCode := r.FormValue("roomCode")
+
+	UStore.CastUserVote(session.ID, roomCode)
+
+	w.WriteHeader(200)
 }
