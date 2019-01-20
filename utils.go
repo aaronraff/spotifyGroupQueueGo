@@ -62,7 +62,6 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 
 		if currPlaying.Item.ID != lastPlaying.Item.ID {
-			log.Println("here")
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
@@ -73,7 +72,12 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 				log.Fatal(err)
 			}
 
-			log.Println(msg)
+			hub.Broadcast(j, roomCode)
+
+			// Reset vote button on front end
+			msg = map[string]string { "type": "resetVote" }
+			j, _ = json.Marshal(msg)
+
 			hub.Broadcast(j, roomCode)
 		}
 

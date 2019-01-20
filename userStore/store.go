@@ -26,6 +26,7 @@ func (s *Store) AddChannel(roomCode string) chan bool {
 }
 
 func (s *Store) UserExists(id string, roomCode string) bool {
+	log.Println(id)
 	if _, ok := s.users[roomCode][id]; ok {
 		return true
 	}
@@ -34,8 +35,6 @@ func (s *Store) UserExists(id string, roomCode string) bool {
 }
 
 func (s *Store) AddUser(id string, roomCode string) {
-
-	log.Println(roomCode)
 	if _, ok := s.users[roomCode]; !ok {
 		// Need to initialize a new map if it has not been created
 		s.users[roomCode] = make(map[string]bool)
@@ -49,14 +48,15 @@ func (s *Store) RemoveUser(id string, roomCode string) {
 }
 
 func (s *Store) CastUserVote(id string, roomCode string) {
-	log.Println(roomCode)
+	prevVal := s.users[roomCode][id]
 	s.users[roomCode][id] = true
-	s.voteCount[roomCode]++
 
-	log.Println(s.getVoteCount(roomCode))
-	log.Println(s.getTotalUserCount(roomCode))
+	// Only update count if they haven't voted yet
+	if prevVal == false {
+		s.voteCount[roomCode]++
+	}
 
-	if(s.getVoteCount(roomCode) > (s.getTotalUserCount(roomCode)/2)) {
+	if(s.GetVoteCount(roomCode) > (s.GetTotalUserCount(roomCode)/2)) {
 		s.notifySkip[roomCode] <- true
 		s.resetUsersVote(roomCode)
 	}
@@ -74,10 +74,10 @@ func (s *Store) resetUsersVote(roomCode string) {
 	s.voteCount[roomCode] = 0
 }
 
-func (s *Store) getTotalUserCount(roomCode string) int {
+func (s *Store) GetTotalUserCount(roomCode string) int {
 	return len(s.users[roomCode])
 }
 
-func (s *Store) getVoteCount(roomCode string) int {
+func (s *Store) GetVoteCount(roomCode string) int {
 	return s.voteCount[roomCode]
 }

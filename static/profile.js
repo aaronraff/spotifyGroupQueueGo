@@ -56,7 +56,6 @@ function appendToSongList(item) {
 
 function removeSongFromSongList(trackID) {
 	var elem = $("#" + trackID)
-	console.log(elem)
 	elem.slideUp('slow', function() {
 		elem.remove();
 	});
@@ -143,4 +142,17 @@ function vetoSong() {
 			$("#veto-song").off('click');
 		}
 	});
+}
+
+function updateVetoCount(count) {
+	$("#veto-count").text(count + " ");
+}
+
+
+function updateUserCount(count) {
+	$("#user-count").text(" " + count);
+}
+
+function resetVoteBtn() {
+	$("#veto-song").html("Veto Current Song");
 }

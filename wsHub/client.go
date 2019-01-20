@@ -2,10 +2,12 @@ package wsHub
 
 import (
 	"log"
+	"strconv"
 	"github.com/gorilla/websocket"
 	"github.com/gorilla/sessions"
 	"net/http"
 	"time"
+	"encoding/json"
 	"spotifyGroupQueueGo/userStore"
 )
 
@@ -34,6 +36,13 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 
 					// We don't want to count them in the total user count (for veting)
 					store.RemoveUser(id, roomCode)
+					userCount := strconv.Itoa(store.GetTotalUserCount(roomCode))
+
+					// Update the front end
+					msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+					j, _ := json.Marshal(msg)
+
+					client.hub.Broadcast(j, roomCode)
 				}
 		}
 	}
@@ -52,8 +61,9 @@ func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, 
 	roomCode := q.Get("roomCode")
 
 	session, _ := cStore.Get(r, "groupQueue")
+	id, _ := session.Values["id"].(string)
 	
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	client.hub.addConnection(client, roomCode)
-	go client.writer(roomCode, uStore, session.ID)
+	go client.writer(roomCode, uStore, id)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strconv"
 	"net/http"
 	"crypto/rand"
 	"encoding/base64"
@@ -167,7 +168,17 @@ func VetoHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	roomCode := r.FormValue("roomCode")
 
-	UStore.CastUserVote(session.ID, roomCode)
+	id, _ := session.Values["id"].(string)
+
+	UStore.CastUserVote(id, roomCode)
+	voteCount := strconv.Itoa(UStore.GetVoteCount(roomCode))
+
+	// Update the front end
+	msg := map[string]string { "type": "vetoCountUpdate", "count": voteCount }
+	j, _ := json.Marshal(msg)
+	log.Println(msg)
+
+	WsHub.Broadcast(j, roomCode)
 
 	w.WriteHeader(200)
 }

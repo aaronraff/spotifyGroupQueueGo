@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"net/http"
 	"encoding/gob"
+	"encoding/json"
 	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
@@ -149,6 +151,23 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
 
+	// Generate an id for the session if one does not exist
+	id, ok := session.Values["id"].(string)
+	
+	if !ok {	
+		code := make([]byte, 7)
+		rand.Read(code)
+
+		// Need to make it base64
+		str := base64.StdEncoding.EncodeToString(code)
+
+		// Need to cut off at 7 chars (base64 can be longer)
+		session.Values["id"] = str[:7]
+		id = str[:7]
+
+		session.Save(r, w)
+	}
+
 	isLoggedIn := false
 
 	if tok != nil {
@@ -169,8 +188,15 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		val.code = "The room is not active."
 	} else {
 		// Add this user to the store
-		if !UStore.UserExists(session.ID, val.code) {
-			UStore.AddUser(session.ID, val.code)
+		if !UStore.UserExists(id, val.code) {
+			UStore.AddUser(id, val.code)
+			userCount := strconv.Itoa(UStore.GetTotalUserCount(val.code))
+
+			// Update the front end
+			msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+			j, _ := json.Marshal(msg)
+
+			WsHub.Broadcast(j, val.code)
 		}
 	}
 
@@ -187,16 +213,34 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		queueSongs, _ = client.GetPlaylistTracks(groupPlaylistId)
 	}
 
-	hasVetoed := UStore.UserHasVoted(session.ID, val.code)
+	hasVetoed := UStore.UserHasVoted(id, val.code)
 
 	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
 											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks,
-											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed })
+											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed,
+											"vetoCount": UStore.GetVoteCount(val.code), "userCount": UStore.GetTotalUserCount(val.code) })
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
+
+	// Generate an id for the session if one does not exist
+	id, ok := session.Values["id"].(string)
+	
+	if !ok {	
+		code := make([]byte, 7)
+		rand.Read(code)
+
+		// Need to make it base64
+		str := base64.StdEncoding.EncodeToString(code)
+
+		// Need to cut off at 7 chars (base64 can be longer)
+		session.Values["id"] = str[:7]
+		id = str[:7]
+
+		session.Save(r, w)
+	}
 
 	isLoggedIn := false
 
@@ -231,14 +275,22 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
 	// Add this user to the store
-	if !UStore.UserExists(session.ID, roomCode) {
-		UStore.AddUser(session.ID, roomCode)
+	if !UStore.UserExists(id, roomCode) {
+		UStore.AddUser(id, roomCode)
+		userCount := strconv.Itoa(UStore.GetTotalUserCount(roomCode))
+
+		// Update the front end
+		msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+		j, _ := json.Marshal(msg)
+
+		WsHub.Broadcast(j, roomCode)
 	}
 
-	hasVetoed := UStore.UserHasVoted(session.ID, roomCode)
+	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {string(roomCode)}, "code": string(roomCode), 
 											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks,
-											"playlistExists": false, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed })
+											"playlistExists": false, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed,
+											"vetoCount": UStore.GetVoteCount(roomCode), "userCount": UStore.GetTotalUserCount(roomCode) })
 }

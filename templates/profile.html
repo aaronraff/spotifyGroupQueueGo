@@ -30,7 +30,8 @@
 
 		<div class="content">
 			{{ if .isActive }}
-				<h3> Room Code: {{ .code }} </h3>	
+				<h3> Room Code: {{ .code }} </h3>
+				<p>Veto Count: <span id="veto-count"> {{ .vetoCount }} </span>/<span id="user-count"> {{ .userCount }} </span></p>
 				<a id="open-search-modal" class="cta-btn"> Add to the Queue </a>
 
 				{{ if .hasVetoed }}
@@ -80,7 +81,7 @@
 		{{ if .isActive }}
 		<script>
 			window.onload = function() {
-				var conn = new WebSocket("ws://" + "localhost:8080" + "/ws?roomCode={{ .code }}");
+				var conn = new WebSocket("ws://" + window.location.host + "/ws?roomCode={{ .code }}");
 				conn.onmessage = function(msg) {
 					var j = JSON.parse(msg.data);
 					console.log(j)
@@ -91,6 +92,15 @@
 							break;
 						case 'removal':
 							removeSongFromSongList(j.trackID);
+							break;
+						case "vetoCountUpdate":
+							updateVetoCount(j.count.toString());
+							break;
+						case "totalUserCountUpdate":
+							updateUserCount(j.count.toString());
+							break;
+						case "resetVote":
+							resetVoteBtn();
 							break;
 					}
 				}
