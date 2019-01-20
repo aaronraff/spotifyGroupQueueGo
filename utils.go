@@ -47,6 +47,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	lastPlaying, _ := client.PlayerCurrentlyPlaying()
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
+		log.Println(currPlaying)
 
 		// Nothing is currently being played
 		if currPlaying == nil {
@@ -61,6 +62,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 
 		if currPlaying.Item.ID != lastPlaying.Item.ID {
+			log.Println("here")
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
@@ -75,17 +77,19 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			hub.Broadcast(j, roomCode)
 		}
 
+
+		lastPlaying = currPlaying
 		
 		// Add 1 sec as a buffer
 		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 1000
 
 		select {
 			case <-time.After(time.Duration(timeLeft) * time.Millisecond):
-				lastPlaying = currPlaying
 				retryCount++
 			case <-notifyChan:
 				// The song has been vetoed, skip it
 				client.Next()
+				time.Sleep(1 * time.Second)
 				continue
 		}
 

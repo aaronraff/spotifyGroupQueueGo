@@ -56,6 +56,7 @@ function appendToSongList(item) {
 
 function removeSongFromSongList(trackID) {
 	var elem = $("#" + trackID)
+	console.log(elem)
 	elem.slideUp('slow', function() {
 		elem.remove();
 	});
