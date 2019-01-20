@@ -6,6 +6,7 @@ import (
 	"log"
 	"encoding/json"
 	"time"
+	"math/rand"
 	"spotifyGroupQueueGo/wsHub"
 )
 
@@ -25,7 +26,8 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 	playlists, err := client.GetPlaylistsForUser(user.ID)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return ""
 	}
 
 	for _, playlist := range playlists.Playlists {
@@ -40,6 +42,10 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
+	globalPlaylistID := GetPlaylistIdByName(client, "United States Top 50")
+	log.Println(globalPlaylistID)
+
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Used to eventually end the Go routine
 	retryCount := 0
@@ -47,7 +53,6 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	lastPlaying, _ := client.PlayerCurrentlyPlaying()
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
-		log.Println(currPlaying)
 
 		// Nothing is currently being played
 		if currPlaying == nil {
@@ -79,6 +84,39 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			j, _ = json.Marshal(msg)
 
 			hub.Broadcast(j, roomCode)
+		}
+
+		// Check if we need to randomly add a song
+		tracks, _ := client.GetPlaylistTracks(playlistID)
+		if len(tracks.Tracks) <= 1 {
+			log.Println("test")
+			// Add a random song from top 50
+			choices, err := client.GetPlaylistTracks(globalPlaylistID)
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+			selection := choices.Tracks[rand.Intn(50)]
+
+			_, err = client.AddTracksToPlaylist(playlistID, spotify.ID(selection.Track.ID))
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+			// Update front end
+			track, err := client.GetTrack(spotify.ID(selection.Track.ID))
+			msg := map[string]interface{} { "type": "addition", "track": track }
+			j, err := json.Marshal(msg)
+			
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			WsHub.Broadcast(j, roomCode)
 		}
 
 
