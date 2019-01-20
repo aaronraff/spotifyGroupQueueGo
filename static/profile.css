@@ -119,6 +119,20 @@
 	border: 1px solid #ffffff;
 	border-radius: 10px;
 	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+	z-index: 998;
+}
+
+.popup-error {
+	display: none;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	text-align: center;
+	transform: translateY(-50%);
+	transform: translateX(-50%);
+	background-color: #1ED760;
+	max-width: 400px;
+	padding: 20px 40px;
 	z-index: 999;
 }
 

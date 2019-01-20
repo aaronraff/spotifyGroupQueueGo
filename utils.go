@@ -104,3 +104,13 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 	}
 }
+
+func IsSongPresent(tracks []spotify.PlaylistTrack, songId string) bool {
+	for _, song := range tracks {
+		if song.Track.ID == spotify.ID(songId) {
+			return true
+		}
+	}
+
+	return false
+}

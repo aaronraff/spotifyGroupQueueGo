@@ -41,7 +41,7 @@ function updateSongList(resultData) {
 }
 
 function appendToSongList(item) {
-	var elem = $("<div class='queue-song' style='display: none'>" +
+	var elem = $("<div class='queue-song' id=" + item.id + " style='display: none'>" +
 					"<img src=" + item.album.images[2].url + ">" +
 					"<div class='details'>" +
 						"<h3>" + item.name + "</h3>" +
@@ -69,9 +69,14 @@ function addToQueue(e) {
 		url: "/add",
 		data: { "songID": songID, "roomCode": roomCode },
 		success: function() {
-			console.log(e)
 			e.target.innerHTML = "Added!"
 			e.target.style.backgroundColor = '#1DB954';
+		},
+		error: function(res) {
+			var j = JSON.parse(res.responseText)
+			var elem = $("<p class='popup-error'>" + j.msg + "</p>");	
+			$(".content").append(elem)
+			elem.show().delay(2000).fadeOut();
 		}
 	});
 }
@@ -155,4 +160,7 @@ function updateUserCount(count) {
 
 function resetVoteBtn() {
 	$("#veto-song").html("Veto Current Song");
+
+	// Add click handler back
+	$("#veto-song").on('click', vetoSong);
 }

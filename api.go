@@ -98,6 +98,17 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 
+	tracks, _ := client.GetPlaylistTracks(groupPlaylistId)
+
+	if IsSongPresent(tracks.Tracks, songID) {
+		msg := map[string]interface{} { "msg": "This song is already in the queue." }
+		j, _ := json.Marshal(msg)
+
+		w.WriteHeader(400)
+		w.Write(j)
+		return
+	}
+
 	_, err := client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
 
 	if err != nil {
