@@ -21,6 +21,12 @@
 			"revisionTime": "2018-10-14T08:38:51Z"
 		},
 		{
+			"checksumSHA1": "EFilcRi6b0Bf3nckKo3UbeqoW50=",
+			"path": "github.com/gorilla/websocket",
+			"revision": "95ba29eb981bbb27d92e1f70bf8a1949452d926b",
+			"revisionTime": "2018-12-06T07:02:39Z"
+		},
+		{
 			"checksumSHA1": "L2KxqPdEKK2oNHv4Ne4mJxTYo3c=",
 			"path": "github.com/zmb3/spotify",
 			"revision": "a4bd83f60e06ab58f3516c61680d0532aabf470e",
