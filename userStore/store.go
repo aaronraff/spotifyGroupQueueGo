@@ -2,17 +2,23 @@ package userStore
 
 import (
 	"log"
+	"github.com/gorilla/websocket"
 )
 
 type Store struct {
-	users map[string]map[string]bool
+	users map[string]map[string]*UserInfo
 	voteCount map[string]int
 	notifySkip map[string]chan bool 
 }
 
+type UserInfo struct {
+	hasVoted bool
+	conn *websocket.Conn
+}
+
 func NewStore() *Store {	
 	return &Store { 
-		users: make(map[string]map[string]bool), 
+		users: make(map[string]map[string]*UserInfo), 
 		voteCount: make(map[string]int),
 		notifySkip: make(map[string]chan bool),
 	}
@@ -34,13 +40,17 @@ func (s *Store) UserExists(id string, roomCode string) bool {
 	return false
 }
 
-func (s *Store) AddUser(id string, roomCode string) {
+func (s *Store) AddUser(id string, roomCode string, wsConn *websocket.Conn) {
 	if _, ok := s.users[roomCode]; !ok {
 		// Need to initialize a new map if it has not been created
-		s.users[roomCode] = make(map[string]bool)
+		s.users[roomCode] = make(map[string]*UserInfo)
 	}
 	
-	s.users[roomCode][id] = false
+	s.users[roomCode][id] = &UserInfo{ hasVoted: false, conn: wsConn }
+}
+
+func (s *Store) UpdateUserConn(id string, roomCode string, wsConn *websocket.Conn) {
+	s.users[roomCode][id].conn = wsConn
 }
 
 func (s *Store) RemoveUser(id string, roomCode string) {
@@ -49,10 +59,10 @@ func (s *Store) RemoveUser(id string, roomCode string) {
 
 func (s *Store) CastUserVote(id string, roomCode string) {
 	prevVal := s.users[roomCode][id]
-	s.users[roomCode][id] = true
+	s.users[roomCode][id].hasVoted = true
 
 	// Only update count if they haven't voted yet
-	if prevVal == false {
+	if prevVal.hasVoted == false {
 		s.voteCount[roomCode]++
 	}
 
@@ -63,12 +73,12 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 }
 
 func (s *Store) UserHasVoted(id string, roomCode string) bool {
-	return s.users[roomCode][id]
+	return s.users[roomCode][id].hasVoted
 }
 
 func (s *Store) resetUsersVote(roomCode string) {
 	for id := range s.users[roomCode] {
-		s.users[roomCode][id] = false	
+		s.users[roomCode][id].hasVoted = false	
 	}
 
 	s.voteCount[roomCode] = 0
@@ -80,4 +90,14 @@ func (s *Store) GetTotalUserCount(roomCode string) int {
 
 func (s *Store) GetVoteCount(roomCode string) int {
 	return s.voteCount[roomCode]
+}
+
+func (s *Store) IsActiveConn(roomCode string, wsConn *websocket.Conn) bool {
+	for _, info := range s.users[roomCode] {
+		if info.conn == wsConn {
+			return true
+		}
+	}
+
+	return false
 }

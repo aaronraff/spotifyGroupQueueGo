@@ -186,20 +186,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		// No room code exists for this user
 		val.code = "The room is not active."
-	} else {
-		// Add this user to the store
-		if !UStore.UserExists(id, val.code) {
-			UStore.AddUser(id, val.code)
-			userCount := strconv.Itoa(UStore.GetTotalUserCount(val.code))
-
-			// Update the front end
-			msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-			j, _ := json.Marshal(msg)
-
-			WsHub.Broadcast(j, val.code)
-		}
 	}
-
 
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	playlistExists := true

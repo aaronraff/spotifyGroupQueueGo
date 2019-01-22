@@ -41,15 +41,18 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 					client.conn.Close()
 					client.hub.removeConnection(client, roomCode)
 
-					// We don't want to count them in the total user count (for veting)
-					store.RemoveUser(id, roomCode)
-					userCount := strconv.Itoa(store.GetTotalUserCount(roomCode))
+					// Only remove the user if it is their active websocket connection
+					if store.IsActiveConn(roomCode, client.conn) {
+						// We don't want to count them in the total user count (for veting)
+						store.RemoveUser(id, roomCode)
+						userCount := strconv.Itoa(store.GetTotalUserCount(roomCode))
 
-					// Update the front end
-					msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-					j, _ := json.Marshal(msg)
+						// Update the front end
+						msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+						j, _ := json.Marshal(msg)
 
-					client.hub.Broadcast(j, roomCode)
+						client.hub.Broadcast(j, roomCode)
+					}
 				}
 		}
 	}
@@ -69,6 +72,20 @@ func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, 
 
 	session, _ := cStore.Get(r, "groupQueue")
 	id, _ := session.Values["id"].(string)
+
+	// Add this user to the store
+	if !uStore.UserExists(id, roomCode) {
+		uStore.AddUser(id, roomCode, conn)
+		userCount := strconv.Itoa(uStore.GetTotalUserCount(roomCode))
+
+		// Update the front end
+		msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+		j, _ := json.Marshal(msg)
+
+		hub.Broadcast(j, roomCode)
+	} else {
+		uStore.UpdateUserConn(id, roomCode, conn)
+	}
 	
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	client.hub.addConnection(client, roomCode)
