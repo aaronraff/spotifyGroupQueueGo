@@ -3,10 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
 	"net/http"
 	"encoding/gob"
-	"encoding/json"
 	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
