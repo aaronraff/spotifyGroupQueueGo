@@ -109,6 +109,10 @@
 							break;
 					}
 				}
+
+				conn.onclose = function(e) {
+					console.log(e)
+				}
 			}
 		</script>
 		{{ end }}
