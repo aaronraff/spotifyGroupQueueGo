@@ -20,7 +20,8 @@ type Client struct {
 var upgrader = websocket.Upgrader{}
 
 func (client *Client) writer(roomCode string, store *userStore.Store, id string) {
-	ticker := time.NewTicker(60 * time.Second)
+	// Heroku timesout connections after 55 seconds (https://devcenter.heroku.com/articles/http-routing#timeouts)
+	ticker := time.NewTicker(50 * time.Second)
 
 	for {
 		select {
