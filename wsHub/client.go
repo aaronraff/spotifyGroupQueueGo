@@ -26,7 +26,12 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 		select {
 			// Block until there is a message
 			case message := <-client.send:
-				client.conn.WriteMessage(websocket.TextMessage, message)
+				log.Println("ws writing message")
+				err := client.conn.WriteMessage(websocket.TextMessage, message)
+
+				if err != nil {
+					log.Println(err)
+				}
 			// Ping the client to see if they're still there
 			case <-ticker.C:
 				if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
