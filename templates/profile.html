@@ -81,7 +81,12 @@
 		{{ if .isActive }}
 		<script>
 			window.onload = function() {
-				var conn = new WebSocket("ws://" + window.location.host + "/ws?roomCode={{ .code }}");
+				var ws = "wss://"
+				if(window.location.hostname == "localhost") {
+					ws = "ws://"
+				}
+
+				var conn = new WebSocket(ws + window.location.host + "/ws?roomCode={{ .code }}");
 				conn.onmessage = function(msg) {
 					var j = JSON.parse(msg.data);
 					console.log(j)
