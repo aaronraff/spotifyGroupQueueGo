@@ -261,18 +261,6 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
 
-	// Add this user to the store
-	if !UStore.UserExists(id, roomCode) {
-		UStore.AddUser(id, roomCode)
-		userCount := strconv.Itoa(UStore.GetTotalUserCount(roomCode))
-
-		// Update the front end
-		msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-		j, _ := json.Marshal(msg)
-
-		WsHub.Broadcast(j, roomCode)
-	}
-
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
