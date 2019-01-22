@@ -43,12 +43,18 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := Store.Get(r, "groupQueue")
 	tok, _ := session.Values["token"].(*oauth2.Token)
+	roomCode := r.FormValue("roomCode")
 
 	client := auth.NewClient(tok)
 	user, _ := client.CurrentUser()
 
 	// Remove the room from the map
 	delete(Rooms, user.ID)
+
+	msg := map[string]interface{} { "type": "roomClosed" }
+	j, _ := json.Marshal(msg)
+
+	WsHub.Broadcast(j, roomCode)
 
 	// Success
 	w.WriteHeader(200)

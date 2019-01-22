@@ -107,6 +107,12 @@
 						case "resetVote":
 							resetVoteBtn();
 							break;
+						case "roomClosed":
+							// We don't want to redirect the host of the room
+							if(!{{ .isOwner }}) {
+								window.location.href = "/static/room-not-found.html"
+							}
+							break;
 					}
 				}
 

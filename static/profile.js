@@ -111,6 +111,7 @@ function closeRoom() {
 	$.ajax({
 		type: "POST",
 		url: "/room/close",
+		data: { "roomCode": roomCode },
 		success: function() {
 			location.reload();
 		}
