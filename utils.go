@@ -10,6 +10,8 @@ import (
 	"spotifyGroupQueueGo/wsHub"
 )
 
+var topPlaylistId spotify.ID
+
 func GetTokenFromCode(roomCode string) *oauth2.Token {
 	for _, v := range Rooms	{
 		if v.code == roomCode {
@@ -89,9 +91,29 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		// Check if we need to randomly add a song
 		tracks, _ := client.GetPlaylistTracks(playlistID)
 		if len(tracks.Tracks) <= 1 {
-			log.Println("test")
+			if topPlaylistId == "" {
+				playlists, err := client.GetCategoryPlaylists("toplists")
+
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				for _, p := range playlists.Playlists {
+					if p.Name == "Global Top 50" {
+						topPlaylistId = p.ID
+						break
+					}
+				}
+
+				if topPlaylistId == "" {
+					log.Println("Could not find Global Top 50 playlist")
+					continue
+				}
+			}
+
 			// Add a random song from top 50
-			choices, err := client.GetPlaylistTracks(globalPlaylistID)
+			choices, err := client.GetPlaylistTracks(topPlaylistId)
 
 			if err != nil {
 				log.Println(err)
