@@ -73,8 +73,13 @@ func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, 
 	session, _ := cStore.Get(r, "groupQueue")
 	id, _ := session.Values["id"].(string)
 
+
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
+	client.hub.addConnection(client, roomCode)
+
 	// Add this user to the store
 	if !uStore.UserExists(id, roomCode) {
+		log.Println("user added", id)
 		uStore.AddUser(id, roomCode, conn)
 		userCount := strconv.Itoa(uStore.GetTotalUserCount(roomCode))
 
@@ -84,10 +89,9 @@ func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, 
 
 		hub.Broadcast(j, roomCode)
 	} else {
+		log.Println("user updated", id)
 		uStore.UpdateUserConn(id, roomCode, conn)
 	}
 	
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
-	client.hub.addConnection(client, roomCode)
 	go client.writer(roomCode, uStore, id)
 }

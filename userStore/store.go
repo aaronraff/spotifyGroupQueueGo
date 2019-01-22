@@ -58,11 +58,12 @@ func (s *Store) RemoveUser(id string, roomCode string) {
 }
 
 func (s *Store) CastUserVote(id string, roomCode string) {
-	prevVal := s.users[roomCode][id]
+	prevVal := s.users[roomCode][id].hasVoted
 	s.users[roomCode][id].hasVoted = true
 
 	// Only update count if they haven't voted yet
-	if prevVal.hasVoted == false {
+	if prevVal == false {
+		log.Println("Vote casted")
 		s.voteCount[roomCode]++
 	}
 
@@ -73,7 +74,11 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 }
 
 func (s *Store) UserHasVoted(id string, roomCode string) bool {
-	return s.users[roomCode][id].hasVoted
+	if val, ok := s.users[roomCode][id]; ok {
+		return val.hasVoted
+	}
+
+	return false
 }
 
 func (s *Store) resetUsersVote(roomCode string) {
