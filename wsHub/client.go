@@ -35,6 +35,7 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 			// Ping the client to see if they're still there
 			case <-ticker.C:
 				if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Println("ticker", err)
 					ticker.Stop()
 					client.conn.Close()
 					client.hub.removeConnection(client, roomCode)
