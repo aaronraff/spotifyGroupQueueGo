@@ -21,6 +21,19 @@ type RoomInfo struct {
 	tok* oauth2.Token
 }
 
+type pageInfo struct {
+	User interface{}
+	Code string
+	IsActive bool
+	IsOwner bool
+	QueueSongs []spotify.PlaylistTrack
+	PlaylistExists bool
+	IsLoggedIn bool
+	HasVetoed bool
+	VetoCount int
+	UserCount int
+}
+
 var key = []byte(os.Getenv("SESSION_KEY"))
 
 var Rooms = make(map[string]RoomInfo)
@@ -243,10 +256,22 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 	hasVetoed := UStore.UserHasVoted(id, val.code)
 
-	tmpl.Execute(w, map[string]interface{} {"user": user, "code": val.code, 
-											"isActive": ok, "isOwner": true, "queueSongs": queueSongs.Tracks,
-											"playlistExists": playlistExists, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed,
-											"vetoCount": UStore.GetVoteCount(val.code), "userCount": UStore.GetTotalUserCount(val.code) })
+	pInfo := pageInfo {
+		User: user, 
+		Code: val.code, 
+		IsActive: ok, 
+		IsOwner: true, 
+		QueueSongs: queueSongs.Tracks,
+		PlaylistExists: playlistExists, 
+		IsLoggedIn: isLoggedIn, 
+		HasVetoed: hasVetoed,
+		VetoCount: UStore.GetVoteCount(val.code), 
+		UserCount: UStore.GetTotalUserCount(val.code),
+	}
+
+	if err = tmpl.Execute(w, pInfo); err != nil {
+		log.Println(err)
+	}
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
@@ -317,9 +342,19 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
+	pInfo := pageInfo {
+		User: struct{ID string} {string(roomCode)}, 
+		Code: string(roomCode),
+		IsActive: true, 
+		IsOwner: true, 
+		QueueSongs: queueSongs.Tracks,
+		PlaylistExists: false, 
+		IsLoggedIn: isLoggedIn, 
+		HasVetoed: hasVetoed,
+		VetoCount: UStore.GetVoteCount(roomCode), 
+		UserCount: UStore.GetTotalUserCount(roomCode),
+	}
+
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
-	tmpl.Execute(w, map[string]interface{} {"user": struct{ID string} {string(roomCode)}, "code": string(roomCode), 
-											"isActive": true, "isOwner": false, "queueSongs": queueSongs.Tracks,
-											"playlistExists": false, "isLoggedIn": isLoggedIn, "hasVetoed": hasVetoed,
-											"vetoCount": UStore.GetVoteCount(roomCode), "userCount": UStore.GetTotalUserCount(roomCode) })
+	tmpl.Execute(w, pInfo) 
 }

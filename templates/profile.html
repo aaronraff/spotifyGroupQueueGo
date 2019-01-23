@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title> {{ .user.ID }}'s Profile </title>
+		<title> {{ .User.ID }}'s Profile </title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="/static/profile.css">
 		<link rel="stylesheet" type="text/css" href="/static/styles.css">
@@ -11,40 +11,40 @@
 		<div class="header">
 			<h1 id="app-name-profile"> Spotify Group Queue </h1>
 
-			{{ if and (not .isActive) (not .playlistExists) (.isOwner) }}	
+			{{ if and (not .IsActive) (not .PlaylistExists) (.IsOwner) }}	
 				<a id="create-playlist"> No playlist. <span>Create</span> one? </a>
 			{{ end }}
 
-			{{ if and (not .isActive) (.playlistExists) (.isOwner) }}
+			{{ if and (not .IsActive) (.PlaylistExists) (.IsOwner) }}
 				<a id="open-room"> <span>Open</span> the Room? </a>
 			{{ end }}
 
-			{{ if and .isActive .isOwner }}
+			{{ if and .IsActive .IsOwner }}
 				<a id="close-room"> <span>Close</span> the Room? </a>
 			{{ end }}
 			
-			{{ if .isLoggedIn }}
+			{{ if .IsLoggedIn }}
 				<a id="logout" href="/logout"> Logout </a>
 			{{ end }}
 		</div>
 
 		<div class="content">
-			{{ if .isActive }}
-				<h3> Room Code: {{ .code }} </h3>
-				<p>Veto Count: <span id="veto-count"> {{ .vetoCount }} </span>/<span id="user-count"> {{ .userCount }} </span></p>
+			{{ if .IsActive }}
+				<h3> Room Code: {{ .Code }} </h3>
+				<p>Veto Count: <span id="veto-count"> {{ .VetoCount }} </span>/<span id="user-count"> {{ .UserCount }} </span></p>
 				<a id="open-search-modal" class="cta-btn"> Add to the Queue </a>
 
-				{{ if .hasVetoed }}
+				{{ if .HasVetoed }}
 					<a id="veto-song" class="cta-btn"> Voted! </a>
 				{{ end }}
 				
-				{{ if not .hasVetoed }}
+				{{ if not .HasVetoed }}
 					<a id="veto-song" class="cta-btn"> Veto Current Song </a>
 				{{ end }}
 			{{ end }}
 	
 			<div id="queue-songs-container">
-				{{ range .queueSongs }}
+				{{ range .QueueSongs }}
 					<div class="queue-song" id="{{ .Track.ID }}">
 						<img src="{{ (index .Track.Album.Images 1).URL }}">
 						<div class="details"> 
@@ -55,11 +55,11 @@
 				{{ end }}
 			</div>
 
-			{{ if .isActive }}
+			{{ if .IsActive }}
 				<div id="search-modal">
 					<form id="search-form">
 						<input class="search-bar" placeholder="Song name">
-						<input id="room-code" type="hidden" value="{{ .code }}">
+						<input id="room-code" type="hidden" value="{{ .Code }}">
 					</form>
 
 					<div id="song-container">
@@ -78,7 +78,7 @@
 		  crossorigin="anonymous">
 		</script>
 
-		{{ if .isActive }}
+		{{ if .IsActive }}
 		<script>
 			window.onload = function() {
 				var ws = "wss://"
@@ -86,7 +86,7 @@
 					ws = "ws://"
 				}
 
-				var conn = new WebSocket(ws + window.location.host + "/ws?roomCode={{ .code }}");
+				var conn = new WebSocket(ws + window.location.host + "/ws?roomCode={{ .Code }}");
 				conn.onmessage = function(msg) {
 					var j = JSON.parse(msg.data);
 					console.log(j)
@@ -109,7 +109,7 @@
 							break;
 						case "roomClosed":
 							// We don't want to redirect the host of the room
-							if(!{{ .isOwner }}) {
+							if(!{{ .IsOwner }}) {
 								window.location.href = "/static/room-not-found.html"
 							}
 							break;
