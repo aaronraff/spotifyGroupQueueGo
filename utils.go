@@ -8,9 +8,14 @@ import (
 	"time"
 	"math/rand"
 	"spotifyGroupQueueGo/wsHub"
+	"errors"
 )
 
 var topPlaylistId spotify.ID
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 func GetTokenFromCode(roomCode string) *oauth2.Token {
 	for _, v := range Rooms	{
@@ -44,10 +49,6 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
-	globalPlaylistID := GetPlaylistIdByName(client, "United States Top 50")
-	log.Println(globalPlaylistID)
-
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Used to eventually end the Go routine
 	retryCount := 0
@@ -91,56 +92,10 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		// Check if we need to randomly add a song
 		tracks, _ := client.GetPlaylistTracks(playlistID)
 		if len(tracks.Tracks) <= 1 {
-			if topPlaylistId == "" {
-				playlists, err := client.GetCategoryPlaylists("toplists")
-
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				for _, p := range playlists.Playlists {
-					if p.Name == "Global Top 50" {
-						topPlaylistId = p.ID
-						break
-					}
-				}
-
-				if topPlaylistId == "" {
-					log.Println("Could not find Global Top 50 playlist")
-					continue
-				}
-			}
-
-			// Add a random song from top 50
-			choices, err := client.GetPlaylistTracks(topPlaylistId)
-
-			if err != nil {
+			if err := addRandomSong(client, playlistID, tracks.Tracks, roomCode); err != nil {
 				log.Println(err)
-				continue
 			}
-
-			selection := choices.Tracks[rand.Intn(50)]
-
-			_, err = client.AddTracksToPlaylist(playlistID, spotify.ID(selection.Track.ID))
-
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			// Update front end
-			track, err := client.GetTrack(spotify.ID(selection.Track.ID))
-			msg := map[string]interface{} { "type": "addition", "track": track }
-			j, err := json.Marshal(msg)
-			
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			WsHub.Broadcast(j, roomCode)
 		}
-
 
 		lastPlaying = currPlaying
 		
@@ -163,6 +118,60 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			return
 		}
 	}
+}
+
+func addRandomSong(client *spotify.Client, playlistID spotify.ID, tracks []spotify.PlaylistTrack, roomCode string) error {
+	if topPlaylistId == "" {
+		playlists, err := client.GetCategoryPlaylists("toplists")
+
+		if err != nil {
+			return err
+		}
+
+		for _, p := range playlists.Playlists {
+			if p.Name == "Global Top 50" {
+				topPlaylistId = p.ID
+				break
+			}
+		}
+
+		if topPlaylistId == "" {
+			return errors.New("Could not find Global Top 50 playlist")
+		}
+	}
+
+	// Add a random song from top 50
+	choices, err := client.GetPlaylistTracks(topPlaylistId)
+
+	if err != nil {
+		return err
+	}
+
+	selection := choices.Tracks[rand.Intn(50)]
+	
+	// Make sure we don't add a song already in the queue
+	for IsSongPresent(tracks, string(selection.Track.ID)) == true {	
+		selection = choices.Tracks[rand.Intn(50)]
+	}
+
+	_, err = client.AddTracksToPlaylist(playlistID, spotify.ID(selection.Track.ID))
+
+	if err != nil {
+		return err
+	}
+
+	// Update front end
+	track, err := client.GetTrack(spotify.ID(selection.Track.ID))
+	msg := map[string]interface{} { "type": "addition", "track": track }
+	j, err := json.Marshal(msg)
+	
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	WsHub.Broadcast(j, roomCode)
+
+	return nil
 }
 
 func IsSongPresent(tracks []spotify.PlaylistTrack, songId string) bool {
