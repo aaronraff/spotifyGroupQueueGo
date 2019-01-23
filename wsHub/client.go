@@ -49,7 +49,11 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 
 						// Update the front end
 						msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-						j, _ := json.Marshal(msg)
+						j, err := json.Marshal(msg)
+
+						if err != nil {
+							log.Println(err)
+						}
 
 						client.hub.Broadcast(j, roomCode)
 					}
@@ -70,26 +74,36 @@ func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, 
 	q := r.URL.Query()
 	roomCode := q.Get("roomCode")
 
-	session, _ := cStore.Get(r, "groupQueue")
-	id, _ := session.Values["id"].(string)
+	session, err := cStore.Get(r, "groupQueue")
 
+	if err != nil {
+		log.Println(err)
+	}
+
+	id, ok := session.Values["id"].(string)
+	
+	if !ok {
+		log.Println("Session value is not of type string")
+	}
 
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	client.hub.addConnection(client, roomCode)
 
 	// Add this user to the store
 	if !uStore.UserExists(id, roomCode) {
-		log.Println("user added", id)
 		uStore.AddUser(id, roomCode, conn)
 		userCount := strconv.Itoa(uStore.GetTotalUserCount(roomCode))
 
 		// Update the front end
 		msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-		j, _ := json.Marshal(msg)
+		j, err := json.Marshal(msg)
+
+		if err != nil {
+			log.Println(err)
+		}
 
 		hub.Broadcast(j, roomCode)
 	} else {
-		log.Println("user updated", id)
 		uStore.UpdateUserConn(id, roomCode, conn)
 	}
 	

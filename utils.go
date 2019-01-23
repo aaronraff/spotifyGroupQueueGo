@@ -29,7 +29,13 @@ func GetTokenFromCode(roomCode string) *oauth2.Token {
 }
 
 func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID {
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+	
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
 	playlists, err := client.GetPlaylistsForUser(user.ID)
 
 	if err != nil {
@@ -53,7 +59,13 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	// Used to eventually end the Go routine
 	retryCount := 0
 
-	lastPlaying, _ := client.PlayerCurrentlyPlaying()
+	lastPlaying, err := client.PlayerCurrentlyPlaying()
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
 
@@ -84,13 +96,23 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 
 			// Reset vote button on front end
 			msg = map[string]string { "type": "resetVote" }
-			j, _ = json.Marshal(msg)
+			j, err = json.Marshal(msg)
+
+			if err != nil {
+				log.Println(err)
+			}
 
 			hub.Broadcast(j, roomCode)
 		}
 
 		// Check if we need to randomly add a song
-		tracks, _ := client.GetPlaylistTracks(playlistID)
+		tracks, err := client.GetPlaylistTracks(playlistID)
+
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
 		if len(tracks.Tracks) <= 1 {
 			if err := addRandomSong(client, playlistID, tracks.Tracks, roomCode); err != nil {
 				log.Println(err)

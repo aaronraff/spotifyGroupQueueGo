@@ -13,11 +13,24 @@ import (
 )
 
 func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	client := auth.NewClient(tok)
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	// Generate a code for the new room
 	code := make([]byte, 7)
@@ -41,18 +54,36 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
+
 	roomCode := r.FormValue("roomCode")
 
 	client := auth.NewClient(tok)
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	// Remove the room from the map
 	delete(Rooms, user.ID)
 
 	msg := map[string]interface{} { "type": "roomClosed" }
-	j, _ := json.Marshal(msg)
+	j, err := json.Marshal(msg)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	WsHub.Broadcast(j, roomCode)
 
@@ -64,8 +95,17 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	songName := r.FormValue("songName")
 	roomCode := r.FormValue("roomCode")
 
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 	
 	// Must be a guest in someone's room
 	if tok == nil {
@@ -76,11 +116,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 
 	results, err := client.Search(songName, spotify.SearchTypeTrack)
+
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
-	resJson, _ := json.Marshal(results.Tracks.Tracks)
+	resJson, err := json.Marshal(results.Tracks.Tracks)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -92,8 +137,17 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	songID := r.FormValue("songID")
 	roomCode := r.FormValue("roomCode")
 
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	// Must be a guest in someone's room
 	if tok == nil {
@@ -104,18 +158,26 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
 
-	tracks, _ := client.GetPlaylistTracks(groupPlaylistId)
+	tracks, err := client.GetPlaylistTracks(groupPlaylistId)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	if IsSongPresent(tracks.Tracks, songID) {
 		msg := map[string]interface{} { "msg": "This song is already in the queue." }
-		j, _ := json.Marshal(msg)
+		j, err := json.Marshal(msg)
+
+		if err != nil {
+			log.Println(err)
+		}
 
 		w.WriteHeader(400)
 		w.Write(j)
 		return
 	}
 
-	_, err := client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
+	_, err = client.AddTracksToPlaylist(groupPlaylistId, spotify.ID(songID))
 
 	if err != nil {
 		log.Println(err)
@@ -124,11 +186,16 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	track, err := client.GetTrack(spotify.ID(songID))
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	msg := map[string]interface{} { "type": "addition", "track": track }
 	j, err := json.Marshal(msg)
 	
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	WsHub.Broadcast(j, roomCode)
@@ -154,7 +221,12 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save the room code to this users session
-	session, _ := Store.Get(r, "groupQueue")
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	session.Values["roomCode"] = roomCode
 	session.Save(r, w)
 
@@ -163,15 +235,28 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {	
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	client := auth.NewClient(tok)
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	description := "Playlist for Spotify Group Queue written by Aaron Raff."
 
-	_, err := client.CreatePlaylistForUser(user.ID, "GroupQueue", description, true)
+	_, err = client.CreatePlaylistForUser(user.ID, "GroupQueue", description, true)
 
 	if err != nil {
 		w.WriteHeader(400)
@@ -182,18 +267,30 @@ func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func VetoHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	roomCode := r.FormValue("roomCode")
 
-	id, _ := session.Values["id"].(string)
+	id, ok := session.Values["id"].(string)
+
+	if !ok {
+		log.Println("Session value is not of type string")
+	}
 
 	UStore.CastUserVote(id, roomCode)
 	voteCount := strconv.Itoa(UStore.GetVoteCount(roomCode))
 
 	// Update the front end
 	msg := map[string]string { "type": "vetoCountUpdate", "count": voteCount }
-	j, _ := json.Marshal(msg)
-	log.Println(msg)
+	j, err := json.Marshal(msg)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	WsHub.Broadcast(j, roomCode)
 

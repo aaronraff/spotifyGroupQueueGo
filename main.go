@@ -80,8 +80,12 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r)
-	session, _ := Store.Get(r, "groupQueue")
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	tok := session.Values["token"]
 
 	// There is a user logged in already
@@ -104,11 +108,24 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	client := auth.NewClient(tok)
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	// Remove the room from the map
 	delete(Rooms, user.ID)
@@ -121,8 +138,17 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
-	state, _ := session.Values["state"].(string)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	state, ok := session.Values["state"].(string)
+
+	if !ok {
+		log.Println("Session value is not of type string")
+	}
 
 	tok, err := auth.Token(state, r)
 	if err != nil {
@@ -146,8 +172,17 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+	
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
@@ -177,7 +212,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := auth.NewClient(tok)
-	user, _ := client.CurrentUser()
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	val, ok := Rooms[user.ID]
 	
@@ -195,7 +234,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		playlistExists = false
 		queueSongs.Tracks = make([]spotify.PlaylistTrack, 0)
 	} else {
-		queueSongs, _ = client.GetPlaylistTracks(groupPlaylistId)
+		queueSongs, err = client.GetPlaylistTracks(groupPlaylistId)
+
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	hasVetoed := UStore.UserHasVoted(id, val.code)
@@ -207,8 +250,17 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func roomHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "groupQueue")
-	tok, _ := session.Values["token"].(*oauth2.Token)
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
 
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
@@ -257,7 +309,11 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
-	queueSongs, _ := client.GetPlaylistTracks(groupPlaylistId)
+	queueSongs, err := client.GetPlaylistTracks(groupPlaylistId)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
