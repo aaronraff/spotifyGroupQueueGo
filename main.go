@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"math/rand"
 	"encoding/base64"
+	"database/sql"
 	"spotifyGroupQueueGo/wsHub"
 	"spotifyGroupQueueGo/userStore"
 )
@@ -44,6 +45,9 @@ var Store = sessions.NewCookieStore(key)
 var redirectURI = os.Getenv("redirectURI")
 var auth spotify.Authenticator
 
+var Db *sql.DB
+var connString = os.Getenv("DATABASE_URL")
+
 var WsHub = wsHub.NewHub()
 var UStore = userStore.NewStore()
 
@@ -57,6 +61,13 @@ func init() {
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic,
 									spotify.ScopeUserReadCurrentlyPlaying)
 	gob.Register(&oauth2.Token{})	
+
+	// Connect to the DB
+	db, err := sql.Open("postgres", connString)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -201,15 +212,11 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	id, ok := session.Values["id"].(string)
 	
 	if !ok {	
-		code := make([]byte, 7)
-		rand.Read(code)
+		// Need a UUID for each user
+		uuid := generateUUID()
 
-		// Need to make it base64
-		str := base64.StdEncoding.EncodeToString(code)
-
-		// Need to cut off at 7 chars (base64 can be longer)
-		session.Values["id"] = str[:7]
-		id = str[:7]
+		session.Values["id"] = uuid
+		id = uuid
 
 		session.Save(r, w)
 	}
@@ -237,22 +244,8 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		// No room code exists for this user
 		val.code = "The room is not active."
 	}
-
-	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
-	playlistExists := true
-	queueSongs := new(spotify.PlaylistTrackPage)
-
-	// No playlist exists with that name
-	if groupPlaylistId == "" {
-		playlistExists = false
-		queueSongs.Tracks = make([]spotify.PlaylistTrack, 0)
-	} else {
-		queueSongs, err = client.GetPlaylistTracks(groupPlaylistId)
-
-		if err != nil {
-			log.Println(err)
-		}
-	}
+	
+	queueSongs, playlistExists := getQueueSongs(&client)
 
 	hasVetoed := UStore.UserHasVoted(id, val.code)
 
@@ -291,15 +284,12 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	id, ok := session.Values["id"].(string)
 	
 	if !ok {	
-		code := make([]byte, 7)
-		rand.Read(code)
-
-		// Need to make it base64
-		str := base64.StdEncoding.EncodeToString(code)
+		// Need a UUID for each user
+		uuid := generateUUID()
 
 		// Need to cut off at 7 chars (base64 can be longer)
-		session.Values["id"] = str[:7]
-		id = str[:7]
+		session.Values["id"] = uuid
+		id = uuid
 
 		session.Save(r, w)
 	}

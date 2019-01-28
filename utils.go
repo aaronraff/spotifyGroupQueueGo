@@ -5,6 +5,7 @@ import (
 	"github.com/zmb3/spotify"
 	"log"
 	"encoding/json"
+	"encoding/base64"
 	"time"
 	"math/rand"
 	"spotifyGroupQueueGo/wsHub"
@@ -204,4 +205,32 @@ func IsSongPresent(tracks []spotify.PlaylistTrack, songId string) bool {
 	}
 
 	return false
+}
+
+func generateUUID() string {
+	identifier := make([]byte, 7)
+	rand.Read(identifier)
+
+	// Need to make it base64
+	return base64.StdEncoding.EncodeToString(identifier)
+}
+
+func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
+	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
+	playlistExists := true
+	queueSongs := new(spotify.PlaylistTrackPage)
+
+	// No playlist exists with that name
+	if groupPlaylistId == "" {
+		playlistExists = false
+		queueSongs.Tracks = make([]spotify.PlaylistTrack, 0)
+	} else {
+		queueSongs, err := client.GetPlaylistTracks(groupPlaylistId)
+
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	return queueSongs, playlistExists
 }
