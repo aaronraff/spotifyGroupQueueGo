@@ -8,6 +8,5 @@ While this project is an active work in progress, it is in a functional and semi
 
 ## Todo
 - Improve code coverage through tests
-- Convert in memory storage to some sort of database (thinking PostgreSQL or SQLite)
 - Add more documentation to improve readability
 - Refine code base since this was largely a prototype
