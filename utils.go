@@ -1,7 +1,6 @@
 package main
 
 import (	
-	"golang.org/x/oauth2"
 	"github.com/zmb3/spotify"
 	"log"
 	"encoding/json"
@@ -16,17 +15,6 @@ var topPlaylistId spotify.ID
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
-}
-
-func GetTokenFromCode(roomCode string) *oauth2.Token {
-	for _, v := range Rooms	{
-		if v.code == roomCode {
-			tok := v.tok
-			return tok
-		}
-	}
-
-	return nil
 }
 
 func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID {
@@ -219,13 +207,14 @@ func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
 	playlistExists := true
 	queueSongs := new(spotify.PlaylistTrackPage)
+	var err error
 
 	// No playlist exists with that name
 	if groupPlaylistId == "" {
 		playlistExists = false
 		queueSongs.Tracks = make([]spotify.PlaylistTrack, 0)
 	} else {
-		queueSongs, err := client.GetPlaylistTracks(groupPlaylistId)
+		queueSongs, err = client.GetPlaylistTracks(groupPlaylistId)
 
 		if err != nil {
 			log.Println(err)

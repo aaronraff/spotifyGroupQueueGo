@@ -17,11 +17,6 @@ import (
 	"spotifyGroupQueueGo/userStore"
 )
 
-type RoomInfo struct {
-	code string
-	tok* oauth2.Token
-}
-
 type pageInfo struct {
 	User interface{}
 	Code string
@@ -36,8 +31,6 @@ type pageInfo struct {
 }
 
 var key = []byte(os.Getenv("SESSION_KEY"))
-
-var Rooms = make(map[string]RoomInfo)
 
 // Uppercase so it can be accessed by the api
 var Store = sessions.NewCookieStore(key)
@@ -62,8 +55,10 @@ func init() {
 									spotify.ScopeUserReadCurrentlyPlaying)
 	gob.Register(&oauth2.Token{})	
 
+	var err error
+
 	// Connect to the DB
-	db, err := sql.Open("postgres", connString)
+	Db, err = sql.Open("postgres", connString)
 
 	if err != nil {
 		log.Fatal(err)
@@ -152,7 +147,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Remove the room from the map
-	delete(Rooms, user.ID)
+	DeleteRoom(Db, string(user.ID))	
 
 	// Invalidate session
 	session.Options.MaxAge = -1
@@ -238,28 +233,24 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	val, ok := Rooms[user.ID]
-	
-	if !ok {
-		// No room code exists for this user
-		val.code = "The room is not active."
-	}
+	roomCode := GetRoomCode(Db, string(user.ID))	
+	active := DoesRoomExist(Db, roomCode)
 	
 	queueSongs, playlistExists := getQueueSongs(&client)
 
-	hasVetoed := UStore.UserHasVoted(id, val.code)
+	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
 	pInfo := pageInfo {
 		User: user, 
-		Code: val.code, 
-		IsActive: ok, 
+		Code: roomCode, 
+		IsActive: active, 
 		IsOwner: true, 
 		QueueSongs: queueSongs.Tracks,
 		PlaylistExists: playlistExists, 
 		IsLoggedIn: isLoggedIn, 
 		HasVetoed: hasVetoed,
-		VetoCount: UStore.GetVoteCount(val.code), 
-		UserCount: UStore.GetTotalUserCount(val.code),
+		VetoCount: UStore.GetVoteCount(roomCode), 
+		UserCount: UStore.GetTotalUserCount(roomCode),
 	}
 
 	if err = tmpl.Execute(w, pInfo); err != nil {
@@ -274,11 +265,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
-
-	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
-	}
+	tok, _ := session.Values["token"].(*oauth2.Token)
 
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
@@ -303,13 +290,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	roomCode := r.URL.Path[len("/room/"):]
 	
 	// See if the room code exists
-	found := false
-	for _, v := range Rooms {
-		if v.code == roomCode {
-			found = true
-			break
-		}
-	}
+	found := DoesRoomExist(Db, roomCode)
 
 	if !found {	
 		log.Printf("Room code %s not found.", roomCode)
@@ -318,7 +299,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the token
-	tok = GetTokenFromCode(roomCode)
+	tok = GetTokenFromCode(Db, roomCode)
 	
 	// Need a client to get the songs in the playlist
 	client := auth.NewClient(tok)
@@ -336,7 +317,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		User: struct{ID string} {string(roomCode)}, 
 		Code: string(roomCode),
 		IsActive: true, 
-		IsOwner: true, 
+		IsOwner: false, 
 		QueueSongs: queueSongs.Tracks,
 		PlaylistExists: false, 
 		IsLoggedIn: isLoggedIn, 

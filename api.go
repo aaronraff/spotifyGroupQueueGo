@@ -42,8 +42,8 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	// Need to cut off at 7 chars (base64 can be longer)
 	roomCode := str[:7]
 
-	val := RoomInfo{roomCode, tok}
-	Rooms[user.ID] = val
+	// Add the room to the DB
+	InsertRoom(Db, roomCode, string(user.ID), tok)
 
 	notifyChan := UStore.AddChannel(roomCode)
 
@@ -75,8 +75,8 @@ func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	// Remove the room from the map
-	delete(Rooms, user.ID)
+	// Remove the room from the DB
+	DeleteRoom(Db, string(user.ID))
 
 	msg := map[string]interface{} { "type": "roomClosed" }
 	j, err := json.Marshal(msg)
@@ -101,16 +101,12 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
-
-	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
-	}
+	tok, _ := session.Values["token"].(*oauth2.Token)
 	
 	// Must be a guest in someone's room
 	if tok == nil {
 		// Get the token
-		tok = GetTokenFromCode(roomCode)
+		tok = GetTokenFromCode(Db, roomCode)
 	}
 
 	client := auth.NewClient(tok)
@@ -152,7 +148,7 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	// Must be a guest in someone's room
 	if tok == nil {
 		// Get the token
-		tok = GetTokenFromCode(roomCode)
+		tok = GetTokenFromCode(Db, roomCode)
 	}
 
 	client := auth.NewClient(tok)
@@ -206,13 +202,7 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 	roomCode := r.FormValue("room-code")
 
 	// See if the room code exists
-	found := false
-	for _, v := range Rooms {
-		if v.code == roomCode {
-			found = true
-			break
-		}
-	}
+	found := DoesRoomExist(Db, roomCode)
 
 	if !found {
 		log.Printf("Room code %s not found.", roomCode)

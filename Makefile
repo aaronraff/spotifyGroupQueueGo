@@ -1,2 +1,2 @@
 all:
-	go run main.go api.go utils.go
+	go run main.go api.go utils.go dbUtils.go
