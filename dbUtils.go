@@ -2,18 +2,38 @@ package main
 
 import (
 	"log"
+	"math/rand"
+	"time"
+	"os"
 	"encoding/json"
 	"golang.org/x/oauth2"
 	"database/sql"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/nacl/secretbox"
 )
+
+var encryptionKey [32]byte 
+
+type queryRes struct {
+	token []byte
+	nonce [24]byte
+}
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	var key [32]byte
+	orig := []byte(os.Getenv("ENCRYPTION_KEY"))
+	copy(key[:], orig)
+	encryptionKey = key
+}
 
 func GetTokenFromCode(db *sql.DB, roomCode string) *oauth2.Token {	
 	row := db.QueryRow("SELECT oauth_token from rooms WHERE room_code = $1", roomCode)
 
+	var tokString []byte
 	tok := &oauth2.Token{}
-	res := new([]byte)
-	if err := row.Scan(res); err != nil {
+	if err := row.Scan(&tokString); err != nil {
 		if err != sql.ErrNoRows {
 			log.Println(err)
 		}
@@ -21,8 +41,17 @@ func GetTokenFromCode(db *sql.DB, roomCode string) *oauth2.Token {
 		return nil
 	}
 
-	json.Unmarshal(*res, tok)
+	// Nonce is stored in first 24 chars
+	var nonce [24]byte
+	copy(nonce[:], tokString[:24])
 
+	res, ok := secretbox.Open(nil, tokString[24:], &nonce, &encryptionKey)
+
+	if !ok {
+		log.Println("The message could not be decrypted")
+	}
+
+	json.Unmarshal(res, tok)
 	return tok
 }
 
@@ -62,13 +91,24 @@ func DeleteRoom(db *sql.DB, userID string) {
 
 func InsertRoom(db *sql.DB, roomCode string, userID string, tok *oauth2.Token) {
 	tokJ, err := json.Marshal(tok)	
+	tokS := string(tokJ)
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	
+	nonce := make([]byte, 24)
+	rand.Read(nonce)
+	var sizedNonce [24]byte
+	copy(sizedNonce[:], nonce)
 
-	_, err = db.Exec("INSERT INTO rooms VALUES ($1, $2, $3)", roomCode, userID, tokJ)
+	// Store nonce at the beginning of the message
+	out := make([]byte, 24)
+	copy(out, nonce)
+
+	res := secretbox.Seal(out, []byte(tokS), &sizedNonce, &encryptionKey)
+	_, err = db.Exec("INSERT INTO rooms VALUES ($1, $2, $3)", roomCode, userID, res)
 
 	if err != nil {
 		log.Println(err)

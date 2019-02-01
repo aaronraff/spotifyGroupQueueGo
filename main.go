@@ -76,20 +76,24 @@ func main() {
 	http.HandleFunc("/favicon.ico", faviconHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
+
 	http.HandleFunc("/profile", profileHandler)
 	http.HandleFunc("/search", SearchHandler)
 	http.HandleFunc("/add", AddToQueueHandler)
 	http.HandleFunc("/join", JoinRoomHandler)
+
 	http.HandleFunc("/room/open", func(w http.ResponseWriter, r *http.Request) {
 		OpenRoomHandler(WsHub, w, r)
 	})
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/veto", VetoHandler)
 	http.HandleFunc("/room/", roomHandler)
+
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		wsHub.WsHandler(WsHub, Store, UStore,  w, r)
 	})
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
 }
