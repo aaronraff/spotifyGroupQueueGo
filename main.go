@@ -243,8 +243,13 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	
 	queueSongs, playlistExists := getQueueSongs(&client)
 
+	scheme := "http://"
+	if r.TLS != nil {
+		scheme = "https://"
+	}
+
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
-	shareable := r.Host + "/room/" + roomCode
+	shareable := scheme + r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: user, 
@@ -318,8 +323,13 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
+	scheme := "http://"
+	if r.TLS != nil {
+		scheme = "https://"
+	}
+
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
-	shareable := r.Host + "/room/" + roomCode
+	shareable := scheme + r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: struct{ID string} {string(roomCode)}, 
