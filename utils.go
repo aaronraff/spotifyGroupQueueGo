@@ -227,6 +227,5 @@ func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 
 func generateShareableLink(r *http.Request, roomCode string) string {		
 	scheme := r.Header.Get("X-Forwarded-Proto")
-	log.Println(scheme)
-	return scheme + r.Host + "/room/" + roomCode
+	return scheme + "://" + r.Host + "/room/" + roomCode
 }
