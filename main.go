@@ -28,6 +28,7 @@ type pageInfo struct {
 	HasVetoed bool
 	VetoCount int
 	UserCount int
+	ShareableLink string
 }
 
 var key = []byte(os.Getenv("SESSION_KEY"))
@@ -243,6 +244,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	queueSongs, playlistExists := getQueueSongs(&client)
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
+	shareable := r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: user, 
@@ -255,6 +257,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		HasVetoed: hasVetoed,
 		VetoCount: UStore.GetVoteCount(roomCode), 
 		UserCount: UStore.GetTotalUserCount(roomCode),
+		ShareableLink: shareable,
 	}
 
 	if err = tmpl.Execute(w, pInfo); err != nil {
@@ -316,6 +319,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
+	shareable := r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: struct{ID string} {string(roomCode)}, 
@@ -328,6 +332,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		HasVetoed: hasVetoed,
 		VetoCount: UStore.GetVoteCount(roomCode), 
 		UserCount: UStore.GetTotalUserCount(roomCode),
+		ShareableLink: shareable,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))

@@ -5,6 +5,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" type="text/css" href="/static/profile.css">
 		<link rel="stylesheet" type="text/css" href="/static/styles.css">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+			integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 	</head>
 	<body>
 		<div class="modal-bg"></div>
@@ -31,6 +33,8 @@
 		<div class="content">
 			{{ if .IsActive }}
 				<h3> Room Code: {{ .Code }} </h3>
+				<p id="copy-shareable-link"> <i class="fa fa-clone" aria-hidden="true"></i> Copy Shareable Link </p>
+				<input id="shareable-link-content" value={{ .ShareableLink }}></input>
 				<p>Veto Count: <span id="veto-count"> {{ .VetoCount }} </span>/<span id="user-count"> {{ .UserCount }} </span></p>
 				<a id="open-search-modal" class="cta-btn"> Add to the Queue </a>
 

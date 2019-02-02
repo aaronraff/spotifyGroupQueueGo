@@ -39,6 +39,16 @@
 	text-align: center;
 }
 
+#copy-shareable-link {
+	cursor: pointer;
+	color: #1ED760;
+}
+
+#shareable-link-content {
+	position: fixed;
+	opacity: 0;
+}
+
 /* Get the first song in the songs container */
 #queue-songs-container > .queue-song:first-child {	
 	box-shadow: 0px 4px 10px rgba(30, 215, 96, .75);

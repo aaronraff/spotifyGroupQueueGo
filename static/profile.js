@@ -1,6 +1,13 @@
 // Used in multiple functions and is constant
 var roomCode = $("#room-code").val();
 
+$("#copy-shareable-link").click(copyShareableLink);
+
+function copyShareableLink() {
+	$("#shareable-link-content").focus().select();
+	document.execCommand("copy");
+}
+
 $("#search-form").submit(searchSubmit);
 
 function searchSubmit() {
