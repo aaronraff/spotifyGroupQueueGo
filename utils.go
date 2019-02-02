@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"time"
 	"math/rand"
+	"net/http"
 	"spotifyGroupQueueGo/wsHub"
 	"errors"
 )
@@ -222,4 +223,8 @@ func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 	}
 
 	return queueSongs, playlistExists
+}
+
+func generateShareableLink(r *http.Request, roomCode string) string {		
+	return r.URL.Scheme + r.Host + "/room/" + roomCode
 }

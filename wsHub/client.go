@@ -27,7 +27,6 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 		select {
 			// Block until there is a message
 			case message := <-client.send:
-				log.Println("ws writing message")
 				err := client.conn.WriteMessage(websocket.TextMessage, message)
 
 				if err != nil {

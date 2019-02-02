@@ -243,13 +243,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	
 	queueSongs, playlistExists := getQueueSongs(&client)
 
-	scheme := "http://"
-	if r.TLS != nil {
-		scheme = "https://"
-	}
-
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
-	shareable := scheme + r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: user, 
@@ -262,7 +256,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		HasVetoed: hasVetoed,
 		VetoCount: UStore.GetVoteCount(roomCode), 
 		UserCount: UStore.GetTotalUserCount(roomCode),
-		ShareableLink: shareable,
+		ShareableLink: generateShareableLink(r, roomCode),
 	}
 
 	if err = tmpl.Execute(w, pInfo); err != nil {
@@ -323,13 +317,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	scheme := "http://"
-	if r.TLS != nil {
-		scheme = "https://"
-	}
-
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
-	shareable := scheme + r.Host + "/room/" + roomCode
 
 	pInfo := pageInfo {
 		User: struct{ID string} {string(roomCode)}, 
@@ -342,7 +330,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		HasVetoed: hasVetoed,
 		VetoCount: UStore.GetVoteCount(roomCode), 
 		UserCount: UStore.GetTotalUserCount(roomCode),
-		ShareableLink: shareable,
+		ShareableLink: generateShareableLink(r, roomCode),
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))

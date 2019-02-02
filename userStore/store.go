@@ -32,7 +32,6 @@ func (s *Store) AddChannel(roomCode string) chan bool {
 }
 
 func (s *Store) UserExists(id string, roomCode string) bool {
-	log.Println(id)
 	if _, ok := s.users[roomCode][id]; ok {
 		return true
 	}
