@@ -53,7 +53,7 @@ func init() {
 	}
 	
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic,
-									spotify.ScopeUserReadCurrentlyPlaying)
+									spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserModifyPlaybackState)
 	gob.Register(&oauth2.Token{})	
 
 	var err error
