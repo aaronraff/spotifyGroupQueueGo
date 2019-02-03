@@ -67,6 +67,7 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 	}
 
 	if(s.GetVoteCount(roomCode) > (s.GetTotalUserCount(roomCode)/2)) {
+		log.Println("should skip")
 		s.notifySkip[roomCode] <- true
 		s.resetUsersVote(roomCode)
 	}

@@ -66,6 +66,9 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
+	// Notify PollPlayerForRemoval that we have started the song
+	canStart <- true
+
 	// Success
 	w.WriteHeader(200)
 }

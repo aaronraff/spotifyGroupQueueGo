@@ -70,6 +70,14 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 
+	// Need this for starting the next song
+	playlistURI := GetPlaylistURIByName(client, "GroupQueue")
+
+	// If no offset is specified it will start with the first track
+	opts := spotify.PlayOptions { PlaybackContext: &playlistURI,
+								  PlaybackOffset: &spotify.PlaybackOffset { Position: 1 },
+								}
+
 	// Used to eventually end the Go routine
 	retryCount := 0
 
@@ -79,6 +87,8 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		log.Println(err)
 		return
 	}
+
+	hasNotifiedStart := false
 
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
@@ -128,7 +138,24 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 
 		// Allow for the playback to be started if we haven't done so already
-		canStart <- true
+		// Should only do this once
+		if !hasNotifiedStart {
+			canStart <- true
+			hasNotifiedStart = true
+
+			//Wait until we know the song has been added (OpenRoom api call)
+			<- canStart
+			time.Sleep(1 * time.Second)
+
+			// Get the song that was just started
+			currPlaying, err = client.PlayerCurrentlyPlaying()
+			log.Println(currPlaying.Item)
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+		}
 
 		lastPlaying = currPlaying
 		// If there is no song currently playing, there should be one starting (OpenRoom api call)
@@ -144,7 +171,11 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 				retryCount++
 			case <-notifyChan:
 				// The song has been vetoed, skip it
-				client.Next()
+				err = client.PlayOpt(&opts)
+
+				if err != nil {
+					log.Println(err)
+				}
 				time.Sleep(1 * time.Second)
 				continue
 		}
