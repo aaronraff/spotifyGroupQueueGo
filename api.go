@@ -115,19 +115,8 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	songName := r.FormValue("songName")
 	roomCode := r.FormValue("roomCode")
 
-	session, err := Store.Get(r, "groupQueue")
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	tok, _ := session.Values["token"].(*oauth2.Token)
-	
-	// Must be a guest in someone's room
-	if tok == nil {
-		// Get the token
-		tok = GetTokenFromCode(Db, roomCode)
-	}
+	// Get the token
+	tok := GetTokenFromCode(Db, roomCode)
 
 	client := auth.NewClient(tok)
 
@@ -153,23 +142,8 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	songID := r.FormValue("songID")
 	roomCode := r.FormValue("roomCode")
 
-	session, err := Store.Get(r, "groupQueue")
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	tok, ok := session.Values["token"].(*oauth2.Token)
-
-	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
-	}
-
-	// Must be a guest in someone's room
-	if tok == nil {
-		// Get the token
-		tok = GetTokenFromCode(Db, roomCode)
-	}
+	// Get the token
+	tok := GetTokenFromCode(Db, roomCode)
 
 	client := auth.NewClient(tok)
 	groupPlaylistId := GetPlaylistIdByName(&client, "GroupQueue")
