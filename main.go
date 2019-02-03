@@ -271,8 +271,6 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, _ := session.Values["token"].(*oauth2.Token)
-
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
 	
@@ -287,12 +285,6 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		session.Save(r, w)
 	}
 
-	isLoggedIn := false
-
-	if tok != nil {
-		isLoggedIn = true
-	}
-
 	roomCode := r.URL.Path[len("/room/"):]
 	
 	// See if the room code exists
@@ -305,7 +297,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the token
-	tok = GetTokenFromCode(Db, roomCode)
+	tok := GetTokenFromCode(Db, roomCode)
 	
 	// Need a client to get the songs in the playlist
 	client := auth.NewClient(tok)
@@ -326,7 +318,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 		IsOwner: false, 
 		QueueSongs: queueSongs.Tracks,
 		PlaylistExists: false, 
-		IsLoggedIn: isLoggedIn, 
+		IsLoggedIn: false,
 		HasVetoed: hasVetoed,
 		VetoCount: UStore.GetVoteCount(roomCode), 
 		UserCount: UStore.GetTotalUserCount(roomCode),

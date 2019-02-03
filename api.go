@@ -47,27 +47,7 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 
 	notifyChan := UStore.AddChannel(roomCode)
 
-	// Need to wait until at least one song has been added before we start
-	canStart := make(chan bool)
-	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, canStart)
-
-	// Wait until at least one song is in the queue
-	<- canStart
-
-	// Start by playing the first song in the playlist
-	playlistURI := GetPlaylistURIByName(&client, "GroupQueue")
-
-	// If no offset is specified it will start with the first track
-	opts := spotify.PlayOptions { PlaybackContext: &playlistURI }
-
-	err = client.PlayOpt(&opts)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	// Notify PollPlayerForRemoval that we have started the song
-	canStart <- true
+	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
 
 	// Success
 	w.WriteHeader(200)
