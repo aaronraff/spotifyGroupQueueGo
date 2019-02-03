@@ -59,7 +59,6 @@ func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.U
 
 	for _, playlist := range playlists.Playlists {
 		if playlist.Name == playlistName {
-			log.Println("Found it.", playlist)
 			return playlist.URI
 		}
 	}
@@ -67,7 +66,7 @@ func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.U
 	return ""
 }
 
-func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
+func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool, canStart chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 
@@ -84,19 +83,13 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	for {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
 
-		// Nothing is currently being played
-		if currPlaying == nil {
-			// Wait for something to be playing
-			time.Sleep(2 * time.Minute)
-			continue
-		}
-
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		if currPlaying.Item.ID != lastPlaying.Item.ID {
+		// Need to also check is anything is playing
+		if (currPlaying.Item != nil) && (currPlaying.Item.ID != lastPlaying.Item.ID) {
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
@@ -134,10 +127,17 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			}
 		}
 
+		// Allow for the playback to be started if we haven't done so already
+		canStart <- true
+
 		lastPlaying = currPlaying
+		// If there is no song currently playing, there should be one starting (OpenRoom api call)
+		timeLeft := 0
 		
-		// Add 1 sec as a buffer
-		timeLeft := currPlaying.Item.Duration - currPlaying.Progress + 1000
+		if currPlaying.Item != nil {
+			// Add 1 sec as a buffer
+			timeLeft = currPlaying.Item.Duration - currPlaying.Progress + 1000
+		}
 
 		select {
 			case <-time.After(time.Duration(timeLeft) * time.Millisecond):

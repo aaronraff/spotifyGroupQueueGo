@@ -46,7 +46,13 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	InsertRoom(Db, roomCode, string(user.ID), tok)
 
 	notifyChan := UStore.AddChannel(roomCode)
-	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
+
+	// Need to wait until at least one song has been added before we start
+	canStart := make(chan bool)
+	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, canStart)
+
+	// Wait until at least one song is in the queue
+	<- canStart
 
 	// Start by playing the first song in the playlist
 	playlistURI := GetPlaylistURIByName(&client, "GroupQueue")
