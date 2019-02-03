@@ -59,6 +59,7 @@ func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.U
 
 	for _, playlist := range playlists.Playlists {
 		if playlist.Name == playlistName {
+			log.Println("Found it.", playlist)
 			return playlist.URI
 		}
 	}

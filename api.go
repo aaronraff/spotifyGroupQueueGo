@@ -49,11 +49,10 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
 
 	// Start by playing the first song in the playlist
-	playlistURI := GetPlaylistURIByName(&client, "groupQueue")
+	playlistURI := GetPlaylistURIByName(&client, "GroupQueue")
 
-	opts := spotify.PlayOptions { PlaybackContext: &playlistURI, 
-								  PlaybackOffset: &spotify.PlaybackOffset { Position: 0 },
-							  	}
+	// If no offset is specified it will start with the first track
+	opts := spotify.PlayOptions { PlaybackContext: &playlistURI }
 
 	err = client.PlayOpt(&opts)
 
