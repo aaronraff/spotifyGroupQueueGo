@@ -46,8 +46,20 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	InsertRoom(Db, roomCode, string(user.ID), tok)
 
 	notifyChan := UStore.AddChannel(roomCode)
-
 	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
+
+	// Start by playing the first song in the playlist
+	playlistURI := GetPlaylistURIByName(&client, "groupQueue")
+
+	opts := spotify.PlayOptions { PlaybackContext: &playlistURI, 
+								  PlaybackOffset: &spotify.PlaybackOffset { Position: 0 },
+							  	}
+
+	err = client.PlayOpt(&opts)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	// Success
 	w.WriteHeader(200)

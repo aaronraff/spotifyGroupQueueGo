@@ -119,6 +119,7 @@
 #search-modal {
 	display: none;
 	position: absolute;
+	margin-top: 10vh;
 	top: 50%;
 	left: 10vw;
 	right: 10vw;

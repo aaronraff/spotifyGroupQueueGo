@@ -42,6 +42,30 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 	return ""
 }
 
+func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.URI {
+	user, err := client.CurrentUser()
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	playlists, err := client.GetPlaylistsForUser(user.ID)
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	for _, playlist := range playlists.Playlists {
+		if playlist.Name == playlistName {
+			return playlist.URI
+		}
+	}
+
+	return ""
+}
+
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
