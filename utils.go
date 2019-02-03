@@ -100,6 +100,12 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 
 		// Need to also check is anything is playing
 		if (currPlaying.Item != nil) && (currPlaying.Item.ID != lastPlaying.Item.ID) {
+			err = client.PlayOpt(&opts)
+
+			if err != nil {
+				log.Println(err)
+			}
+
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)

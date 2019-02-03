@@ -128,16 +128,14 @@ function closeRoom() {
 $("#open-search-modal").click(openSearchModal);
 
 function openSearchModal() {
-	$(".modal-bg").show(500);
 	$("#search-modal").show(500);
 	$(".search-bar").focus();
 }
 
 // Catch click outside of the modal
-$(".modal-bg").click(closeSearchModal);
+$("#close-modal").click(closeSearchModal);
 
 function closeSearchModal() {	
-	$(".modal-bg").hide(500);
 	$("#search-modal").hide(500);
 }
 
