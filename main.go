@@ -47,6 +47,8 @@ var UStore = userStore.NewStore()
 
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	// Used for heroku
 	if redirectURI == "" {
 		redirectURI = "http://localhost:8080/spotify-callback"

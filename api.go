@@ -12,6 +12,10 @@ import (
 	"spotifyGroupQueueGo/wsHub"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	session, err := Store.Get(r, "groupQueue")
 

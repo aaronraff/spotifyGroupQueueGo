@@ -16,6 +16,7 @@ import (
 var topPlaylistId spotify.ID
 
 func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -84,16 +85,25 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	retryCount := 0
 	lastPlaying, err := client.PlayerCurrentlyPlaying()
 
-	if err != nil {
+	// EOF means nothing is currently playing
+	if err != nil && err.Error() != "EOF" {
 		log.Println(err)
 		return
 	}
 
-	for {
+	for retryCount < 5 {
 		currPlaying, err := client.PlayerCurrentlyPlaying()
 
+		// EOF means nothing is currently playing
 		if err != nil {
-			log.Println(err)
+			if err.Error() == "EOF" {
+				// Wait for something to be playing
+				time.Sleep(15 * time.Second)
+			} else {
+				log.Println(err)
+			}
+
+			retryCount++
 			continue
 		}
 
@@ -106,7 +116,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			j, err := json.Marshal(msg)
 			
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 
 			hub.Broadcast(j, roomCode)
@@ -138,20 +148,26 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			case <-time.After(time.Duration(timeLeft) * time.Millisecond):
 				retryCount++
 			case <-notifyChan:
+				log.Println("skipping")
+
+				// Set the last playing
+				// Handles edge case where the first song in the queue is skipped
+				lastPlaying, err = client.PlayerCurrentlyPlaying()
+
+				// EOF means nothing is currently playing
+				if err != nil && err.Error() != "EOF" {
+					log.Println(err)
+				}
+
 				// The song has been vetoed, skip it
 				err = client.Next()
 
 				if err != nil {
 					log.Println(err)
 				}
+
 				time.Sleep(1 * time.Second)
 				continue
-		}
-
-		// Stop trying to remove tracks
-		if retryCount > 5 {
-			log.Println("Retry count reached, done polling.")
-			return
 		}
 	}
 }
