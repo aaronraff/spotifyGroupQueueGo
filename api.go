@@ -46,7 +46,6 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	InsertRoom(Db, roomCode, string(user.ID), tok)
 
 	notifyChan := UStore.AddChannel(roomCode)
-
 	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
 
 	// Success

@@ -123,18 +123,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		}
 
 		// Check if we need to randomly add a song
-		tracks, err := client.GetPlaylistTracks(playlistID)
-
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		if len(tracks.Tracks) <= 1 {
-			if err := addRandomSong(client, playlistID, tracks.Tracks, roomCode); err != nil {
-				log.Println(err)
-			}
-		}
+		checkAddRandomSong(client, roomCode)
 
 		lastPlaying = currPlaying
 		// If there is no song currently playing, there should be one starting
@@ -163,6 +152,21 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		if retryCount > 5 {
 			log.Println("Retry count reached, done polling.")
 			return
+		}
+	}
+}
+
+func checkAddRandomSong(client *spotify.Client, roomCode string) {
+	playlistID := GetPlaylistIdByName(client, "GroupQueue")
+	tracks, err := client.GetPlaylistTracks(playlistID)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	if len(tracks.Tracks) <= 1 {
+		if err := addRandomSong(client, playlistID, tracks.Tracks, roomCode); err != nil {
+			log.Println(err)
 		}
 	}
 }
