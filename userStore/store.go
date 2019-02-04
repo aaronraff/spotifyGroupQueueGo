@@ -106,3 +106,8 @@ func (s *Store) IsActiveConn(roomCode string, wsConn *websocket.Conn) bool {
 
 	return false
 }
+
+func (s *Store) RemoveRoom(roomCode string) {
+	delete(s.notifySkip, roomCode)	
+	delete(s.users, roomCode)	
+}

@@ -76,6 +76,7 @@ func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the room from the DB
 	DeleteRoom(Db, string(user.ID))
+	UStore.RemoveRoom(roomCode)
 
 	msg := map[string]interface{} { "type": "roomClosed" }
 	j, err := json.Marshal(msg)
