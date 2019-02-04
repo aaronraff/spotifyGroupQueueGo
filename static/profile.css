@@ -139,6 +139,11 @@
 	overflow-y: scroll;
 }
 
+#song-container div:last-child {
+	/* Make sure the last song in the search is able to be seen */
+	margin-bottom: 100px;
+}
+
 .popup-error {
 	display: none;
 	position: absolute;

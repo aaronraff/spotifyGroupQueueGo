@@ -93,7 +93,6 @@
 				var conn = new WebSocket(ws + window.location.host + "/ws?roomCode={{ .Code }}");
 				conn.onmessage = function(msg) {
 					var j = JSON.parse(msg.data);
-					console.log(j)
 
 					switch(j.type) {
 						case 'addition':
@@ -118,10 +117,6 @@
 							}
 							break;
 					}
-				}
-
-				conn.onclose = function(e) {
-					console.log(e)
 				}
 			}
 		</script>
