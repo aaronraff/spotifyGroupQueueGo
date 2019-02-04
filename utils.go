@@ -10,12 +10,24 @@ import (
 	"net/http"
 	"spotifyGroupQueueGo/wsHub"
 	"errors"
+	"database/sql"
 )
 
 var topPlaylistId spotify.ID
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
+}
+
+func RestartPollers(db *sql.DB, hub *wsHub.Hub) {	
+	codes := GetAllRoomCodes(db)
+	
+	for _, roomCode := range codes {
+		tok := GetTokenFromCode(db, roomCode)
+		client := auth.NewClient(tok)
+		notifyChan := UStore.AddChannel(roomCode)
+		go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
+	}
 }
 
 func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID {

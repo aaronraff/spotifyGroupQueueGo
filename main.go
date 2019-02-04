@@ -72,6 +72,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	// If the app restarts on Heroku we need to restart the pollers to
+	// avoid disruption
+	RestartPollers(Db, WsHub)
 	
 	http.HandleFunc("/", loginHandler);
 	http.HandleFunc("/favicon.ico", faviconHandler)

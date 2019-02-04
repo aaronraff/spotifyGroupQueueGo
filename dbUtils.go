@@ -14,11 +14,6 @@ import (
 
 var encryptionKey [32]byte 
 
-type queryRes struct {
-	token []byte
-	nonce [24]byte
-}
-
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -28,8 +23,35 @@ func init() {
 	encryptionKey = key
 }
 
+func GetAllRoomCodes(db *sql.DB) []string {
+	rows, err := db.Query("SELECT room_code FROM rooms")
+	defer rows.Close()
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		} else {
+			log.Println(err)
+		}
+	}
+
+	res := make([]string, 0)
+	
+	for rows.Next() {
+		val := ""
+		if err := rows.Scan(&val); err != nil {
+			log.Println(err)
+			continue
+		}
+
+		res = append(res, val)
+	}
+
+	return res
+}
+
 func GetTokenFromCode(db *sql.DB, roomCode string) *oauth2.Token {	
-	row := db.QueryRow("SELECT oauth_token from rooms WHERE room_code = $1", roomCode)
+	row := db.QueryRow("SELECT oauth_token FROM rooms WHERE room_code = $1", roomCode)
 
 	var tokString []byte
 	tok := &oauth2.Token{}
