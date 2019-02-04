@@ -161,3 +161,9 @@
 		margin-top: 20px;
 	}
 }
+
+@media screen and (max-width: 380px) {
+	#open-search-modal {
+		margin-bottom: 20px;
+	}
+}
