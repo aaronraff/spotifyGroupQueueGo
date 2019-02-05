@@ -7,6 +7,8 @@ With this web app it is possible to host a room (using your Spotify account) tha
 While this project is an active work in progress, it is in a functional and semi stable state. I will be continuing to improve the code base as well as add new features.
 
 ## Todo
+- Add workerStore to store channels that can be used to stop the PollPlayerForRemoval go routine
+- Add a step when a user creates a room that tells them to start the first song in the playlist (then start the poller afterwards)
 - Improve code coverage through tests
 - Add more documentation to improve readability
 - Refine code base since this was largely a prototype
