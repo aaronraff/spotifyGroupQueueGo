@@ -8,9 +8,10 @@ import (
 	"time"
 	"math/rand"
 	"net/http"
-	"spotifyGroupQueueGo/wsHub"
 	"errors"
 	"database/sql"
+	"spotifyGroupQueueGo/wsHub"
+	"spotifyGroupQueueGo/workerStore"
 )
 
 var topPlaylistId spotify.ID
@@ -27,7 +28,8 @@ func RestartPollers(db *sql.DB, hub *wsHub.Hub) {
 		tok := GetTokenFromCode(db, roomCode)
 		client := auth.NewClient(tok)
 		notifyChan := UStore.AddChannel(roomCode)
-		go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
+		cancelChan := workerStore.AddPoller(roomCode)
+		go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, cancelChan)
 	}
 }
 
@@ -79,7 +81,8 @@ func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.U
 	return ""
 }
 
-func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub, notifyChan chan bool) {
+func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub,
+						  notifyChan chan bool, cancelChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 	retryCount := 0
@@ -147,6 +150,10 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		select {
 			case <-time.After(time.Duration(timeLeft) * time.Millisecond):
 				retryCount++
+			case <-cancelChan:
+				// The poller should shut down
+				log.Println("Stopping poller")
+				return
 			case <-notifyChan:
 				log.Println("skipping")
 

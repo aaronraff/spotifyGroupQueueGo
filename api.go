@@ -10,6 +10,7 @@ import (
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 	"spotifyGroupQueueGo/wsHub"
+	"spotifyGroupQueueGo/workerStore"
 )
 
 func init() {
@@ -50,7 +51,8 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	InsertRoom(Db, roomCode, string(user.ID), tok)
 
 	notifyChan := UStore.AddChannel(roomCode)
-	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan)
+	cancelChan := workerStore.AddPoller(roomCode)
+	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, cancelChan)
 
 	// Success
 	w.WriteHeader(200)
@@ -77,6 +79,11 @@ func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	// Stop the poller
+	cancelChan := workerStore.GetPollerChan(roomCode)
+	cancelChan <- true
+	workerStore.RemovePoller(roomCode)
 
 	// Remove the room from the DB
 	DeleteRoom(Db, string(user.ID))
