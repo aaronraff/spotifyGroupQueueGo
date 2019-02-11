@@ -17,7 +17,7 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
+func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := Store.Get(r, "groupQueue")
 
 	if err != nil {
@@ -50,11 +50,45 @@ func OpenRoomHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
 	// Add the room to the DB
 	InsertRoom(Db, roomCode, string(user.ID), tok)
 
+	// Make sure there is atleast one song in the playlist
+	checkAddRandomSong(&client, roomCode)
+	
+	// Update front end with room code for /room/start
+	msg := map[string]string { "roomCode": roomCode }
+	j, err := json.Marshal(msg)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Success
+	w.Header().Set("StatusCode", "200")
+	w.Write(j)
+}
+
+
+// This will be hit after the user confirms that they have started the first 
+// song in the playlist
+func StartPollerHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, "groupQueue")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	tok, ok := session.Values["token"].(*oauth2.Token)
+
+	if !ok {
+		log.Println("Session value is not of type *oauth2.Token")
+	}
+
+	roomCode := r.FormValue("roomCode")
+
+	client := auth.NewClient(tok)
 	notifyChan := UStore.AddChannel(roomCode)
 	cancelChan := workerStore.AddPoller(roomCode)
 	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, cancelChan)
 
-	// Success
 	w.WriteHeader(200)
 }
 

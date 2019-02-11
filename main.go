@@ -89,8 +89,9 @@ func main() {
 	http.HandleFunc("/add", AddToQueueHandler)
 	http.HandleFunc("/join", JoinRoomHandler)
 
-	http.HandleFunc("/room/open", func(w http.ResponseWriter, r *http.Request) {
-		OpenRoomHandler(WsHub, w, r)
+	http.HandleFunc("/room/open", OpenRoomHandler)
+	http.HandleFunc("/room/start", func(w http.ResponseWriter, r *http.Request) {
+		StartPollerHandler(WsHub, w, r)
 	})
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/veto", VetoHandler)

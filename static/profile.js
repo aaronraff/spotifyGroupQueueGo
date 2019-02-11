@@ -106,8 +106,11 @@ function openRoom() {
 	$.ajax({
 		type: "POST",
 		url: "/room/open",
-		success: function() {
-			location.reload();
+		success: function(res) {
+			// Update the room code for confirmStart
+			j = JSON.parse(res);
+			roomCode = j.roomCode;
+			$("#start-modal").fadeIn();
 		}
 	});
 }
@@ -125,6 +128,19 @@ function closeRoom() {
 	});
 }
 
+$("#confirm-start").click(confirmStart);
+
+function confirmStart() {
+	$.ajax({
+		type: "POST",
+		url: "/room/start",
+		data: { "roomCode": roomCode },
+		success: function() {
+			location.reload();
+		}
+	});
+}
+
 $("#open-search-modal").click(openSearchModal);
 
 function openSearchModal() {
@@ -132,7 +148,6 @@ function openSearchModal() {
 	$(".search-bar").focus();
 }
 
-// Catch click outside of the modal
 $("#close-modal").click(closeSearchModal);
 
 function closeSearchModal() {	

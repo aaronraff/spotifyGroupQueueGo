@@ -116,6 +116,25 @@
 	right: 20px;
 }
 
+#start-modal {
+	display: none;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	text-align: center;
+	background-color: #ffffff;
+	z-index: 997;
+}
+
+#start-modal form {
+	position: fixed;
+	top: 35%;
+	left: 0;
+	right: 0;
+}
+
 #search-modal {
 	display: none;
 	position: fixed;
