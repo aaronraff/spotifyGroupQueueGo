@@ -62,7 +62,7 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 
 	// Only update count if they haven't voted yet
 	if prevVal == false {
-		log.Println("Vote casted")
+		log.Printf("Vote casted by %s", id)
 		s.voteCount[roomCode]++
 	}
 
