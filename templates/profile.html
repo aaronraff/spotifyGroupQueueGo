@@ -128,6 +128,20 @@
 							break;
 					}
 				}
+
+				function handleVisibilityChange() {
+					if(document.hidden) {
+						// Close the websocket to save resources
+						conn.close();
+					} else {
+						// Reload the page (which also opens a new websocket)
+						// Doing this instead of making a new socket, so we can get
+						// changes that we didn't receive while disconnected
+						location.reload();
+					}
+				}
+
+				document.addEventListener("visibilitychange", handleVisibilityChange);
 			}
 		</script>
 		{{ end }}

@@ -42,21 +42,34 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 
 					// Only remove the user if it is their active websocket connection
 					if store.IsActiveConn(roomCode, client.conn) {
-						// We don't want to count them in the total user count (for veting)
-						store.RemoveUser(id, roomCode)
-						userCount := strconv.Itoa(store.GetTotalUserCount(roomCode))
+						// We don't want to count them in the total user count (for voting)
+						// We want a grace period though, since the socket will become inactive when
+						// they navigate away
+						gracePeriodTicker := time.NewTicker(2 * time.Minute)
 
-						// Update the front end
-						msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
-						j, err := json.Marshal(msg)
+						select {
+							// Grace period is up, check if we should remove
+							case <-gracePeriodTicker.C:
+								// See if they have a new active connection
+								// If not, remove the user
+								if store.IsActiveConn(roomCode, client.conn) {
+									log.Printf("Removing user %s from room %s", id, roomCode)
+									store.RemoveUser(id, roomCode)
+									userCount := strconv.Itoa(store.GetTotalUserCount(roomCode))
 
-						if err != nil {
-							log.Println(err)
-						}
+									// Update the front end
+									msg := map[string]string { "type": "totalUserCountUpdate", "count": userCount }
+									j, err := json.Marshal(msg)
 
-						client.hub.Broadcast(j, roomCode)
+									if err != nil {
+										log.Println(err)
+									}
+
+									client.hub.Broadcast(j, roomCode)
+								}
 					}
 				}
+			}
 		}
 	}
 }
