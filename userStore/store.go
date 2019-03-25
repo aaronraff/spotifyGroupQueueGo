@@ -82,6 +82,7 @@ func (s *Store) UserHasVoted(id string, roomCode string) bool {
 }
 
 func (s *Store) resetUsersVote(roomCode string) {
+	log.Printf("Reseting user votes for room: %s", roomCode)
 	for id := range s.users[roomCode] {
 		s.users[roomCode][id].hasVoted = false	
 	}
