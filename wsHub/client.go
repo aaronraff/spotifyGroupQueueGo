@@ -45,11 +45,12 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 						// We don't want to count them in the total user count (for voting)
 						// We want a grace period though, since the socket will become inactive when
 						// they navigate away
-						gracePeriodTicker := time.NewTicker(2 * time.Minute)
+						gracePeriodTicker := time.NewTicker(10 * time.Minute)
 
 						select {
 							// Grace period is up, check if we should remove
 							case <-gracePeriodTicker.C:
+								gracePeriodTicker.Stop()
 								// See if they have a new active connection
 								// If not, remove the user
 								if store.IsActiveConn(roomCode, client.conn) {
