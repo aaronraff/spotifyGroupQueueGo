@@ -14,7 +14,7 @@ func NewHub() *Hub {
 
 func (h *Hub) addConnection(c *Client, roomCode string) {
 	h.clients[roomCode] = append(h.clients[roomCode], c)
-	log.Println("Added client:", c)
+	log.Println("Added client:", c.conn.RemoteAddr())
 }
 
 func (h *Hub) removeConnection(c *Client, roomCode string) {
