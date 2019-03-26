@@ -121,8 +121,19 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			// We are on a new song so we need to reset the votes
 			uStore.ResetUsersVote(roomCode)	
 
-			msg := map[string]string { "type": "removal", "trackID": string(lastPlaying.Item.ID) }
+			// Update the front end to show 0 votes to skip 
+			// since we just reset the count
+			msg := map[string]string { "type": "vetoCountUpdate", "count": "0" }
 			j, err := json.Marshal(msg)
+
+			if err != nil {
+				log.Println(err)
+			}
+
+			hub.Broadcast(j, roomCode)
+
+			msg = map[string]string { "type": "removal", "trackID": string(lastPlaying.Item.ID) }
+			j, err = json.Marshal(msg)
 			
 			if err != nil {
 				log.Println(err)
