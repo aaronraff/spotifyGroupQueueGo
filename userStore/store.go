@@ -69,7 +69,7 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 	if(s.GetVoteCount(roomCode) > (s.GetTotalUserCount(roomCode)/2)) {
 		log.Println("should skip")
 		s.notifySkip[roomCode] <- true
-		s.resetUsersVote(roomCode)
+		s.ResetUsersVote(roomCode)
 	}
 }
 
@@ -81,7 +81,7 @@ func (s *Store) UserHasVoted(id string, roomCode string) bool {
 	return false
 }
 
-func (s *Store) resetUsersVote(roomCode string) {
+func (s *Store) ResetUsersVote(roomCode string) {
 	log.Printf("Reseting user votes for room: %s", roomCode)
 	for id := range s.users[roomCode] {
 		s.users[roomCode][id].hasVoted = false	

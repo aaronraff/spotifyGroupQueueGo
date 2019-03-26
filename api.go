@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"spotifyGroupQueueGo/wsHub"
 	"spotifyGroupQueueGo/workerStore"
+	"spotifyGroupQueueGo/userStore"
 )
 
 func init() {
@@ -69,7 +70,7 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 // This will be hit after the user confirms that they have started the first 
 // song in the playlist
-func StartPollerHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) {
+func StartPollerHandler(hub *wsHub.Hub, uStore *userStore.Store, w http.ResponseWriter, r *http.Request) {
 	session, err := Store.Get(r, "groupQueue")
 
 	if err != nil {
@@ -87,7 +88,7 @@ func StartPollerHandler(hub *wsHub.Hub, w http.ResponseWriter, r *http.Request) 
 	client := auth.NewClient(tok)
 	notifyChan := UStore.AddChannel(roomCode)
 	cancelChan := workerStore.AddPoller(roomCode)
-	go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, cancelChan)
+	go PollPlayerForRemoval(&client, roomCode, hub, uStore, notifyChan, cancelChan)
 
 	w.WriteHeader(200)
 }

@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"spotifyGroupQueueGo/wsHub"
 	"spotifyGroupQueueGo/workerStore"
+	"spotifyGroupQueueGo/userStore"
 )
 
 var topPlaylistId spotify.ID
@@ -21,7 +22,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func RestartPollers(db *sql.DB, hub *wsHub.Hub) {	
+func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {	
 	codes := GetAllRoomCodes(db)
 	
 	for _, roomCode := range codes {
@@ -29,7 +30,7 @@ func RestartPollers(db *sql.DB, hub *wsHub.Hub) {
 		client := auth.NewClient(tok)
 		notifyChan := UStore.AddChannel(roomCode)
 		cancelChan := workerStore.AddPoller(roomCode)
-		go PollPlayerForRemoval(&client, roomCode, hub, notifyChan, cancelChan)
+		go PollPlayerForRemoval(&client, roomCode, hub, uStore, notifyChan, cancelChan)
 	}
 }
 
@@ -82,7 +83,8 @@ func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.U
 }
 
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub,
-						  notifyChan chan bool, cancelChan chan bool) {
+						  uStore *userStore.Store, notifyChan chan bool, 
+						  cancelChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 	retryCount := 0
@@ -115,6 +117,10 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			// Reset the retry count (we did something)
 			retryCount = 0
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
+
+			// We are on a new song so we need to reset the votes
+			uStore.ResetUsersVote(roomCode)	
+
 			msg := map[string]string { "type": "removal", "trackID": string(lastPlaying.Item.ID) }
 			j, err := json.Marshal(msg)
 			

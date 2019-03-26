@@ -77,7 +77,7 @@ func main() {
 
 	// If the app restarts on Heroku we need to restart the pollers to
 	// avoid disruption
-	RestartPollers(Db, WsHub)
+	RestartPollers(Db, WsHub, UStore)
 	
 	http.HandleFunc("/", loginHandler);
 	http.HandleFunc("/favicon.ico", faviconHandler)
@@ -91,7 +91,7 @@ func main() {
 
 	http.HandleFunc("/room/open", OpenRoomHandler)
 	http.HandleFunc("/room/start", func(w http.ResponseWriter, r *http.Request) {
-		StartPollerHandler(WsHub, w, r)
+		StartPollerHandler(WsHub, UStore, w, r)
 	})
 	http.HandleFunc("/room/close", CloseRoomHandler)
 	http.HandleFunc("/room/veto", VetoHandler)
