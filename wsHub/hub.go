@@ -26,7 +26,7 @@ func (h *Hub) removeConnection(c *Client, roomCode string) {
 		}
 	}
 
-	log.Println("Removed client:", c)
+	log.Println("Removed client:", c.conn.RemoteAddr())
 }
 
 func (h *Hub) Broadcast(msg []byte, roomCode string) {
