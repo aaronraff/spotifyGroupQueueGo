@@ -128,6 +128,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 
 			if err != nil {
 				log.Println(err)
+				continue
 			}
 
 			hub.Broadcast(j, roomCode)
@@ -137,6 +138,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			
 			if err != nil {
 				log.Println(err)
+				continue
 			}
 
 			hub.Broadcast(j, roomCode)
@@ -147,6 +149,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 
 			if err != nil {
 				log.Println(err)
+				continue
 			}
 
 			hub.Broadcast(j, roomCode)
@@ -172,8 +175,6 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 				log.Println("Stopping poller")
 				return
 			case <-notifyChan:
-				log.Println("skipping")
-
 				// Set the last playing
 				// Handles edge case where the first song in the queue is skipped
 				lastPlaying, err = client.PlayerCurrentlyPlaying()
