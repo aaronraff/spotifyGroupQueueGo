@@ -8,10 +8,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 	"spotifyGroupQueueGo/wsHub"
 	"spotifyGroupQueueGo/workerStore"
 	"spotifyGroupQueueGo/userStore"
+	"spotifyGroupQueueGo/sessionStore"
 )
 
 func init() {
@@ -25,11 +25,13 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	client := auth.NewClient(tok)
 	user, err := client.CurrentUser()
@@ -77,11 +79,13 @@ func StartPollerHandler(hub *wsHub.Hub, uStore *userStore.Store, w http.Response
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	roomCode := r.FormValue("roomCode")
 
@@ -100,11 +104,13 @@ func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	roomCode := r.FormValue("roomCode")
 
@@ -251,11 +257,13 @@ func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	client := auth.NewClient(tok)
 	user, err := client.CurrentUser()

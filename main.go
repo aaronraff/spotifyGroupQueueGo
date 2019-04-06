@@ -4,17 +4,16 @@ import (
 	"log"
 	"os"
 	"net/http"
-	"encoding/gob"
 	"text/template"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/context"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
 	"math/rand"
 	"encoding/base64"
 	"database/sql"
 	"spotifyGroupQueueGo/wsHub"
 	"spotifyGroupQueueGo/userStore"
+	"spotifyGroupQueueGo/sessionStore"
 )
 
 type pageInfo struct {
@@ -56,7 +55,6 @@ func init() {
 	
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic,
 									spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserModifyPlaybackState)
-	gob.Register(&oauth2.Token{})	
 
 	var err error
 
@@ -117,7 +115,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok := session.Values["token"]
+	uuid, ok := session.Values["uuid"].(string)
+
+	if !ok {
+		log.Println("Session value is not of type string")
+	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	// There is a user logged in already
 	if tok != nil {
@@ -145,11 +149,13 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
+
+	tok := sessionStore.GetToken(uuid)
 
 	client := auth.NewClient(tok)
 	user, err := client.CurrentUser()
@@ -193,8 +199,14 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		log.Fatal("State mismatch.")
 	}
+	
+	uuid := generateUUID()
 
-	session.Values["token"] = tok
+	// Register the user in the session store
+	sessionStore.RegisterUser(uuid, tok)	
+
+	// Store the UUID
+	session.Values["uuid"] = uuid
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/profile", http.StatusSeeOther)
@@ -209,10 +221,10 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	tok, ok := session.Values["token"].(*oauth2.Token)
+	uuid, ok := session.Values["uuid"].(string)
 
 	if !ok {
-		log.Println("Session value is not of type *oauth2.Token")
+		log.Println("Session value is not of type string")
 	}
 
 	// Generate an id for the session if one does not exist
@@ -229,6 +241,8 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isLoggedIn := false
+
+	tok := sessionStore.GetToken(uuid)
 
 	if tok != nil {
 		isLoggedIn = true
