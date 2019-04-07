@@ -65,12 +65,18 @@ func (s *Store) CastUserVote(id string, roomCode string) {
 		log.Printf("Vote casted by %s", id)
 		s.voteCount[roomCode]++
 	}
+}
 
+func (s *Store) ShouldSkip(roomCode string) bool {	
 	if(s.GetVoteCount(roomCode) > (s.GetTotalUserCount(roomCode)/2)) {
-		log.Println("should skip")
-		s.notifySkip[roomCode] <- true
-		s.ResetUsersVote(roomCode)
+		return true
 	}
+
+	return false;
+}
+
+func (s *Store) NotifySkip(roomCode string) {	
+	s.notifySkip[roomCode] <- true
 }
 
 func (s *Store) UserHasVoted(id string, roomCode string) bool {

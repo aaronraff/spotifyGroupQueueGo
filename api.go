@@ -300,6 +300,12 @@ func VetoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	UStore.CastUserVote(id, roomCode)
+	if UStore.ShouldSkip(roomCode) {
+		UStore.ResetUsersVote(roomCode)
+		// Let the poller know we are skipping a song
+		UStore.NotifySkip(roomCode)
+	}
+
 	voteCount := strconv.Itoa(UStore.GetVoteCount(roomCode))
 
 	// Update the front end
