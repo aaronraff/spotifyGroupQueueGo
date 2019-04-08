@@ -22,6 +22,9 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
+// RestartPollers is used to start up a poller for every currently open room.
+// This is mainly used when the application fails and is restarted. That way
+// we have a running poller for every room (even after a failure).
 func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {	
 	codes := GetAllRoomCodes(db)
 	
@@ -34,6 +37,9 @@ func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {
 	}
 }
 
+// GetPlaylistIdByName return the spotify ID for the specified playlist name.
+// This playlist must be one of the user's playlists. If the playlist is not
+// found, an empty string is returned.
 func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID {
 	user, err := client.CurrentUser()
 	
@@ -58,30 +64,11 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 	return ""
 }
 
-func GetPlaylistURIByName(client *spotify.Client, playlistName string) spotify.URI {
-	user, err := client.CurrentUser()
-
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-
-	playlists, err := client.GetPlaylistsForUser(user.ID)
-
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-
-	for _, playlist := range playlists.Playlists {
-		if playlist.Name == playlistName {
-			return playlist.URI
-		}
-	}
-
-	return ""
-}
-
+// PollPlayerForRemoval periodically checks the status of the currently playing
+// song to see if it needs to be removed from the playlist. It also skips and
+// removes songs from the GroupQueue playlist when it gets notified that the
+// current song should be skipped. The cancelChan parameter is used to receive
+// notice that the poller should be stopped (ex. the room is closed).
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub,
 						  uStore *userStore.Store, notifyChan chan bool, 
 						  cancelChan chan bool) {
@@ -197,6 +184,9 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 	}
 }
 
+// checkAddRandom song is used to see if a new song needs to be added to the
+// playlist. If there is only one song currently in the playlist (queue), it
+// will then add a random song to the playlist.
 func checkAddRandomSong(client *spotify.Client, roomCode string) {
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 	tracks, err := client.GetPlaylistTracks(playlistID)
@@ -212,6 +202,10 @@ func checkAddRandomSong(client *spotify.Client, roomCode string) {
 	}
 }
 
+// addRandomSong adds a random song to the GroupQueue playlist. It also ensures
+// that this song is not already in the playlist (by looking at the tracks
+// parameter). The roomCode parameter is used to then broadcast the changes to
+// the websocket clients.
 func addRandomSong(client *spotify.Client, playlistID spotify.ID, tracks []spotify.PlaylistTrack, roomCode string) error {
 	if topPlaylistId == "" {
 		playlists, err := client.GetCategoryPlaylists("toplists")
@@ -266,6 +260,8 @@ func addRandomSong(client *spotify.Client, playlistID spotify.ID, tracks []spoti
 	return nil
 }
 
+// IsSongPresent returns whether or not a songId is in an array of Spotify
+// tracks.
 func IsSongPresent(tracks []spotify.PlaylistTrack, songId string) bool {
 	for _, song := range tracks {
 		if song.Track.ID == spotify.ID(songId) {
@@ -276,6 +272,7 @@ func IsSongPresent(tracks []spotify.PlaylistTrack, songId string) bool {
 	return false
 }
 
+// generateUUID generates and returns a Universally Unique Identifier.
 func generateUUID() string {
 	identifier := make([]byte, 7)
 	rand.Read(identifier)
@@ -284,6 +281,9 @@ func generateUUID() string {
 	return base64.StdEncoding.EncodeToString(identifier)
 }
 
+// getQueueSongs is used to retrieve the songs currently in the GroupQueue
+// playlist. The client param is used to make authenticated requested to the
+// Spotify API.
 func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 	groupPlaylistId := GetPlaylistIdByName(client, "GroupQueue")
 	playlistExists := true
@@ -305,6 +305,9 @@ func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 	return queueSongs, playlistExists
 }
 
+// generateShareableLink will generate a string (link) to the room using the
+// roomCode provided. It uses the passed in Request struct to determine the
+// scheme and host information for the link.
 func generateShareableLink(r *http.Request, roomCode string) string {		
 	scheme := r.Header.Get("X-Forwarded-Proto")
 	return scheme + "://" + r.Host + "/room/" + roomCode
