@@ -30,17 +30,19 @@ function updateSongList(resultData) {
 
 	for(var i = 0; i < 10; i++) {
 		var item = resultData[i]
-		var elem = $("<div class='queue-song'>" +
-						"<img src=" + item.album.images[2].url + ">" +
-						"<div class='details'>" +
-							"<h3>" + item.name + "</h3>" +
-							"<p>" + item.artists[0].name + "</p>" +
-						"</div>" +
-						"<a class='cta-btn add' id=" + item.id + ">" + "Add </a>" +
-					  "</div>"
-					);
+		if(item) {
+			var elem = $("<div class='queue-song'>" +
+							"<img src=" + item.album.images[2].url + ">" +
+							"<div class='details'>" +
+								"<h3>" + item.name + "</h3>" +
+								"<p>" + item.artists[0].name + "</p>" +
+							"</div>" +
+							"<a class='cta-btn add' id=" + item.id + ">" + "Add </a>" +
+						  "</div>"
+						);
 
-		$("#song-container").append(elem);
+			$("#song-container").append(elem);
+		}
 	}
 
 	$(".add").click(addToQueue);
