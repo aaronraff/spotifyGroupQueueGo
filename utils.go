@@ -1,18 +1,18 @@
 package main
 
-import (	
+import (
+	"database/sql"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"github.com/aaronraff/spotifyGroupQueueGo/userStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/workerStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/wsHub"
 	"github.com/zmb3/spotify"
 	"log"
-	"encoding/json"
-	"encoding/base64"
-	"time"
 	"math/rand"
 	"net/http"
-	"errors"
-	"database/sql"
-	"spotifyGroupQueueGo/wsHub"
-	"spotifyGroupQueueGo/workerStore"
-	"spotifyGroupQueueGo/userStore"
+	"time"
 )
 
 var topPlaylistId spotify.ID
@@ -25,9 +25,9 @@ func init() {
 // RestartPollers is used to start up a poller for every currently open room.
 // This is mainly used when the application fails and is restarted. That way
 // we have a running poller for every room (even after a failure).
-func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {	
+func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {
 	codes := GetAllRoomCodes(db)
-	
+
 	for _, roomCode := range codes {
 		tok := GetTokenFromCode(db, roomCode)
 		client := auth.NewClient(tok)
@@ -42,7 +42,7 @@ func RestartPollers(db *sql.DB, hub *wsHub.Hub, uStore *userStore.Store) {
 // found, an empty string is returned.
 func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID {
 	user, err := client.CurrentUser()
-	
+
 	if err != nil {
 		log.Println(err)
 		return ""
@@ -70,8 +70,8 @@ func GetPlaylistIdByName(client *spotify.Client, playlistName string) spotify.ID
 // current song should be skipped. The cancelChan parameter is used to receive
 // notice that the poller should be stopped (ex. the room is closed).
 func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hub,
-						  uStore *userStore.Store, notifyChan chan bool, 
-						  cancelChan chan bool) {
+	uStore *userStore.Store, notifyChan chan bool,
+	cancelChan chan bool) {
 	// Need this to remove tracks
 	playlistID := GetPlaylistIdByName(client, "GroupQueue")
 	retryCount := 0
@@ -106,11 +106,11 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			client.RemoveTracksFromPlaylist(playlistID, lastPlaying.Item.ID)
 
 			// We are on a new song so we need to reset the votes
-			uStore.ResetUsersVote(roomCode)	
+			uStore.ResetUsersVote(roomCode)
 
-			// Update the front end to show 0 votes to skip 
+			// Update the front end to show 0 votes to skip
 			// since we just reset the count
-			msg := map[string]string { "type": "vetoCountUpdate", "count": "0" }
+			msg := map[string]string{"type": "vetoCountUpdate", "count": "0"}
 			j, err := json.Marshal(msg)
 
 			if err != nil {
@@ -120,9 +120,9 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 
 			hub.Broadcast(j, roomCode)
 
-			msg = map[string]string { "type": "removal", "trackID": string(lastPlaying.Item.ID) }
+			msg = map[string]string{"type": "removal", "trackID": string(lastPlaying.Item.ID)}
 			j, err = json.Marshal(msg)
-			
+
 			if err != nil {
 				log.Println(err)
 				continue
@@ -131,7 +131,7 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 			hub.Broadcast(j, roomCode)
 
 			// Reset vote button on front end
-			msg = map[string]string { "type": "resetVote" }
+			msg = map[string]string{"type": "resetVote"}
 			j, err = json.Marshal(msg)
 
 			if err != nil {
@@ -148,38 +148,38 @@ func PollPlayerForRemoval(client *spotify.Client, roomCode string, hub *wsHub.Hu
 		lastPlaying = currPlaying
 		// If there is no song currently playing, there should be one starting
 		timeLeft := 1000 * 60
-		
+
 		if currPlaying.Item != nil {
 			// Add 1 sec as a buffer
 			timeLeft = currPlaying.Item.Duration - currPlaying.Progress + 1000
 		}
 
 		select {
-			case <-time.After(time.Duration(timeLeft) * time.Millisecond):
-				retryCount++
-			case <-cancelChan:
-				// The poller should shut down
-				log.Println("Stopping poller")
-				return
-			case <-notifyChan:
-				// Set the last playing
-				// Handles edge case where the first song in the queue is skipped
-				lastPlaying, err = client.PlayerCurrentlyPlaying()
+		case <-time.After(time.Duration(timeLeft) * time.Millisecond):
+			retryCount++
+		case <-cancelChan:
+			// The poller should shut down
+			log.Println("Stopping poller")
+			return
+		case <-notifyChan:
+			// Set the last playing
+			// Handles edge case where the first song in the queue is skipped
+			lastPlaying, err = client.PlayerCurrentlyPlaying()
 
-				// EOF means nothing is currently playing
-				if err != nil && err.Error() != "EOF" {
-					log.Println(err)
-				}
+			// EOF means nothing is currently playing
+			if err != nil && err.Error() != "EOF" {
+				log.Println(err)
+			}
 
-				// The song has been vetoed, skip it
-				err = client.Next()
+			// The song has been vetoed, skip it
+			err = client.Next()
 
-				if err != nil {
-					log.Println(err)
-				}
+			if err != nil {
+				log.Println(err)
+			}
 
-				time.Sleep(1 * time.Second)
-				continue
+			time.Sleep(1 * time.Second)
+			continue
 		}
 	}
 }
@@ -234,9 +234,9 @@ func addRandomSong(client *spotify.Client, playlistID spotify.ID, tracks []spoti
 	}
 
 	selection := choices.Tracks[rand.Intn(50)]
-	
+
 	// Make sure we don't add a song already in the queue
-	for IsSongPresent(tracks, string(selection.Track.ID)) == true {	
+	for IsSongPresent(tracks, string(selection.Track.ID)) == true {
 		selection = choices.Tracks[rand.Intn(50)]
 	}
 
@@ -248,9 +248,9 @@ func addRandomSong(client *spotify.Client, playlistID spotify.ID, tracks []spoti
 
 	// Update front end
 	track, err := client.GetTrack(spotify.ID(selection.Track.ID))
-	msg := map[string]interface{} { "type": "addition", "track": track }
+	msg := map[string]interface{}{"type": "addition", "track": track}
 	j, err := json.Marshal(msg)
-	
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -308,7 +308,7 @@ func getQueueSongs(client *spotify.Client) (*spotify.PlaylistTrackPage, bool) {
 // generateShareableLink will generate a string (link) to the room using the
 // roomCode provided. It uses the passed in Request struct to determine the
 // scheme and host information for the link.
-func generateShareableLink(r *http.Request, roomCode string) string {		
+func generateShareableLink(r *http.Request, roomCode string) string {
 	scheme := r.Header.Get("X-Forwarded-Proto")
 	return scheme + "://" + r.Host + "/room/" + roomCode
 }

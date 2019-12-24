@@ -1,1 +1,1 @@
-web: bin/spotifyGroupQueueGo
+web: bin/github.com/aaronraff/spotifyGroupQueueGo

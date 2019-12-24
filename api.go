@@ -1,17 +1,17 @@
 package main
 
 import (
-	"log"
-	"strconv"
-	"net/http"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/aaronraff/spotifyGroupQueueGo/sessionStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/userStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/workerStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/wsHub"
 	"github.com/zmb3/spotify"
-	"spotifyGroupQueueGo/wsHub"
-	"spotifyGroupQueueGo/workerStore"
-	"spotifyGroupQueueGo/userStore"
-	"spotifyGroupQueueGo/sessionStore"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -55,9 +55,9 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure there is atleast one song in the playlist
 	checkAddRandomSong(&client, roomCode)
-	
+
 	// Update front end with room code for /room/start
-	msg := map[string]string { "roomCode": roomCode }
+	msg := map[string]string{"roomCode": roomCode}
 	j, err := json.Marshal(msg)
 
 	if err != nil {
@@ -69,8 +69,7 @@ func OpenRoomHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-
-// This will be hit after the user confirms that they have started the first 
+// This will be hit after the user confirms that they have started the first
 // song in the playlist
 func StartPollerHandler(hub *wsHub.Hub, uStore *userStore.Store, w http.ResponseWriter, r *http.Request) {
 	session, err := Store.Get(r, "groupQueue")
@@ -130,7 +129,7 @@ func CloseRoomHandler(w http.ResponseWriter, r *http.Request) {
 	DeleteRoom(Db, string(user.ID))
 	UStore.RemoveRoom(roomCode)
 
-	msg := map[string]interface{} { "type": "roomClosed" }
+	msg := map[string]interface{}{"type": "roomClosed"}
 	j, err := json.Marshal(msg)
 
 	if err != nil {
@@ -187,7 +186,7 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if IsSongPresent(tracks.Tracks, songID) {
-		msg := map[string]interface{} { "msg": "This song is already in the queue." }
+		msg := map[string]interface{}{"msg": "This song is already in the queue."}
 		j, err := json.Marshal(msg)
 
 		if err != nil {
@@ -206,16 +205,16 @@ func AddToQueueHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	
+
 	track, err := client.GetTrack(spotify.ID(songID))
 
 	if err != nil {
 		log.Println(err)
 	}
 
-	msg := map[string]interface{} { "type": "addition", "track": track }
+	msg := map[string]interface{}{"type": "addition", "track": track}
 	j, err := json.Marshal(msg)
-	
+
 	if err != nil {
 		log.Println(err)
 	}
@@ -246,11 +245,11 @@ func JoinRoomHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["roomCode"] = roomCode
 	session.Save(r, w)
 
-	// Redirect to that room	
-	http.Redirect(w, r, "/room/" + roomCode, http.StatusSeeOther)
+	// Redirect to that room
+	http.Redirect(w, r, "/room/"+roomCode, http.StatusSeeOther)
 }
 
-func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {	
+func CreatePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := Store.Get(r, "groupQueue")
 
 	if err != nil {
@@ -309,7 +308,7 @@ func VetoHandler(w http.ResponseWriter, r *http.Request) {
 	voteCount := strconv.Itoa(UStore.GetVoteCount(roomCode))
 
 	// Update the front end
-	msg := map[string]string { "type": "vetoCountUpdate", "count": voteCount }
+	msg := map[string]string{"type": "vetoCountUpdate", "count": voteCount}
 	j, err := json.Marshal(msg)
 
 	if err != nil {

@@ -1,33 +1,33 @@
 package main
 
 import (
-	"log"
-	"os"
-	"net/http"
-	"text/template"
-	"github.com/gorilla/sessions"
-	"github.com/gorilla/context"
-	"github.com/zmb3/spotify"
-	"math/rand"
-	"encoding/base64"
 	"database/sql"
-	"spotifyGroupQueueGo/wsHub"
-	"spotifyGroupQueueGo/userStore"
-	"spotifyGroupQueueGo/sessionStore"
+	"encoding/base64"
+	"github.com/aaronraff/spotifyGroupQueueGo/sessionStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/userStore"
+	"github.com/aaronraff/spotifyGroupQueueGo/wsHub"
+	"github.com/gorilla/context"
+	"github.com/gorilla/sessions"
+	"github.com/zmb3/spotify"
+	"log"
+	"math/rand"
+	"net/http"
+	"os"
+	"text/template"
 )
 
 type pageInfo struct {
-	User interface{}
-	Code string
-	IsActive bool
-	IsOwner bool
-	QueueSongs []spotify.PlaylistTrack
+	User           interface{}
+	Code           string
+	IsActive       bool
+	IsOwner        bool
+	QueueSongs     []spotify.PlaylistTrack
 	PlaylistExists bool
-	IsLoggedIn bool
-	HasVetoed bool
-	VetoCount int
-	UserCount int
-	ShareableLink string
+	IsLoggedIn     bool
+	HasVetoed      bool
+	VetoCount      int
+	UserCount      int
+	ShareableLink  string
 }
 
 var key = []byte(os.Getenv("SESSION_KEY"))
@@ -52,9 +52,9 @@ func init() {
 	if redirectURI == "" {
 		redirectURI = "http://localhost:8080/spotify-callback"
 	}
-	
+
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadEmail, spotify.ScopePlaylistModifyPublic,
-									spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserModifyPlaybackState)
+		spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserModifyPlaybackState)
 
 	var err error
 
@@ -76,8 +76,8 @@ func main() {
 	// If the app restarts on Heroku we need to restart the pollers to
 	// avoid disruption
 	RestartPollers(Db, WsHub, UStore)
-	
-	http.HandleFunc("/", loginHandler);
+
+	http.HandleFunc("/", loginHandler)
 	http.HandleFunc("/favicon.ico", faviconHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/spotify-callback", spotifyCallbackHandler)
@@ -97,11 +97,11 @@ func main() {
 
 	http.HandleFunc("/playlist/create", CreatePlaylistHandler)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		wsHub.WsHandler(WsHub, Store, UStore,  w, r)
+		wsHub.WsHandler(WsHub, Store, UStore, w, r)
 	})
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	http.ListenAndServe(":" + port, context.ClearHandler(http.DefaultServeMux))
+	http.ListenAndServe(":"+port, context.ClearHandler(http.DefaultServeMux))
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +125,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// There is a user logged in already
 	if tok != nil {
-		http.Redirect(w, r, "/profile", http.StatusSeeOther)	
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)
 	} else {
 		// CSRF Protection with state
 		b := make([]byte, 20)
@@ -165,7 +165,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Remove the room from the map
-	DeleteRoom(Db, string(user.ID))	
+	DeleteRoom(Db, string(user.ID))
 
 	// Invalidate session
 	session.Options.MaxAge = -1
@@ -192,18 +192,18 @@ func spotifyCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
 	}
-	
+
 	// CSRF Protection with state
 	st := r.FormValue("state")
 	if st != state {
 		http.NotFound(w, r)
 		log.Fatal("State mismatch.")
 	}
-	
+
 	uuid := generateUUID()
 
 	// Register the user in the session store
-	sessionStore.RegisterUser(uuid, tok)	
+	sessionStore.RegisterUser(uuid, tok)
 
 	// Store the UUID
 	session.Values["uuid"] = uuid
@@ -216,7 +216,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
 
 	session, err := Store.Get(r, "groupQueue")
-	
+
 	if err != nil {
 		log.Println(err)
 	}
@@ -229,8 +229,8 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
-	
-	if !ok {	
+
+	if !ok {
 		// Need a UUID for each user
 		uuid := generateUUID()
 
@@ -259,25 +259,25 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	roomCode := GetRoomCode(Db, string(user.ID))	
+	roomCode := GetRoomCode(Db, string(user.ID))
 	active := DoesRoomExist(Db, roomCode)
-	
+
 	queueSongs, playlistExists := getQueueSongs(&client)
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
-	pInfo := pageInfo {
-		User: user, 
-		Code: roomCode, 
-		IsActive: active, 
-		IsOwner: true, 
-		QueueSongs: queueSongs.Tracks,
-		PlaylistExists: playlistExists, 
-		IsLoggedIn: isLoggedIn, 
-		HasVetoed: hasVetoed,
-		VetoCount: UStore.GetVoteCount(roomCode), 
-		UserCount: UStore.GetTotalUserCount(roomCode),
-		ShareableLink: generateShareableLink(r, roomCode),
+	pInfo := pageInfo{
+		User:           user,
+		Code:           roomCode,
+		IsActive:       active,
+		IsOwner:        true,
+		QueueSongs:     queueSongs.Tracks,
+		PlaylistExists: playlistExists,
+		IsLoggedIn:     isLoggedIn,
+		HasVetoed:      hasVetoed,
+		VetoCount:      UStore.GetVoteCount(roomCode),
+		UserCount:      UStore.GetTotalUserCount(roomCode),
+		ShareableLink:  generateShareableLink(r, roomCode),
 	}
 
 	if err = tmpl.Execute(w, pInfo); err != nil {
@@ -294,8 +294,8 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate an id for the session if one does not exist
 	id, ok := session.Values["id"].(string)
-	
-	if !ok {	
+
+	if !ok {
 		// Need a UUID for each user
 		uuid := generateUUID()
 
@@ -307,11 +307,11 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	roomCode := r.URL.Path[len("/room/"):]
-	
+
 	// See if the room code exists
 	found := DoesRoomExist(Db, roomCode)
 
-	if !found {	
+	if !found {
 		log.Printf("Room code %s not found.", roomCode)
 		http.Redirect(w, r, "/static/room-not-found.html", http.StatusSeeOther)
 		return
@@ -319,7 +319,7 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the token
 	tok := GetTokenFromCode(Db, roomCode)
-	
+
 	// Need a client to get the songs in the playlist
 	client := auth.NewClient(tok)
 
@@ -332,20 +332,20 @@ func roomHandler(w http.ResponseWriter, r *http.Request) {
 
 	hasVetoed := UStore.UserHasVoted(id, roomCode)
 
-	pInfo := pageInfo {
-		User: struct{ID string} {string(roomCode)}, 
-		Code: string(roomCode),
-		IsActive: true, 
-		IsOwner: false, 
-		QueueSongs: queueSongs.Tracks,
-		PlaylistExists: false, 
-		IsLoggedIn: false,
-		HasVetoed: hasVetoed,
-		VetoCount: UStore.GetVoteCount(roomCode), 
-		UserCount: UStore.GetTotalUserCount(roomCode),
-		ShareableLink: generateShareableLink(r, roomCode),
+	pInfo := pageInfo{
+		User:           struct{ ID string }{string(roomCode)},
+		Code:           string(roomCode),
+		IsActive:       true,
+		IsOwner:        false,
+		QueueSongs:     queueSongs.Tracks,
+		PlaylistExists: false,
+		IsLoggedIn:     false,
+		HasVetoed:      hasVetoed,
+		VetoCount:      UStore.GetVoteCount(roomCode),
+		UserCount:      UStore.GetTotalUserCount(roomCode),
+		ShareableLink:  generateShareableLink(r, roomCode),
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
-	tmpl.Execute(w, pInfo) 
+	tmpl.Execute(w, pInfo)
 }
