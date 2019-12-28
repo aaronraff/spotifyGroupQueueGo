@@ -202,6 +202,40 @@ func checkAddRandomSong(client *spotify.Client, roomCode string) {
 	}
 }
 
+// startFirstTrack turns off shuffle mode and then starts the first track in the
+// GroupQueue playlist
+func startFirstTrack(client *spotify.Client) {
+	// Turn off shuffle so the queue plays in the correct order
+	client.Shuffle(false)
+
+	// Start the first song in the GroupQueue playlist
+	playlistId := GetPlaylistIdByName(client, "GroupQueue")
+	uri := spotify.URI("spotify:playlist:" + playlistId)
+
+	devices, err := client.PlayerDevices()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var deviceId spotify.ID
+	if len(devices) > 0 {
+		deviceId = spotify.ID(devices[0].ID)
+	} else {
+		log.Println("No available devices to start playing first track on.")
+		return
+	}
+
+	err = client.PlayOpt(&spotify.PlayOptions{
+		DeviceID:        &deviceId,
+		PlaybackContext: &uri,
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 // addRandomSong adds a random song to the GroupQueue playlist. It also ensures
 // that this song is not already in the playlist (by looking at the tracks
 // parameter). The roomCode parameter is used to then broadcast the changes to

@@ -89,6 +89,9 @@ func StartPollerHandler(hub *wsHub.Hub, uStore *userStore.Store, w http.Response
 	roomCode := r.FormValue("roomCode")
 
 	client := auth.NewClient(tok)
+
+	startFirstTrack(&client)
+
 	notifyChan := UStore.AddChannel(roomCode)
 	cancelChan := workerStore.AddPoller(roomCode)
 	go PollPlayerForRemoval(&client, roomCode, hub, uStore, notifyChan, cancelChan)
