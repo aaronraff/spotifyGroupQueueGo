@@ -75,7 +75,7 @@ func (client *Client) writer(roomCode string, store *userStore.Store, id string)
 	}
 }
 
-func WsHandler(hub *Hub, cStore *sessions.CookieStore, uStore *userStore.Store, w http.ResponseWriter, r *http.Request) {
+func WsHandler(hub *Hub, cStore sessions.Store, uStore *userStore.Store, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
