@@ -31,8 +31,6 @@ type pageInfo struct {
 }
 
 var key = []byte(os.Getenv("SESSION_KEY"))
-
-// Uppercase so it can be accessed by the api
 var Store = sessions.NewFilesystemStore("./sessions/", key)
 
 var redirectURI = os.Getenv("redirectURI")
@@ -131,6 +129,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		b := make([]byte, 20)
 		rand.Read(b)
 		state := base64.StdEncoding.EncodeToString(b)
+
+		session.Values["state"] = state
+		session.Save(r, w)
 
 		url := auth.AuthURL(state)
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
