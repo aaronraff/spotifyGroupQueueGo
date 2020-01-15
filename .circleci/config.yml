@@ -1,0 +1,9 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: /go/src/github.com/aaronraff/spotifyGroupQueueGo
+    steps:
+      - checkout
+      - run: make test

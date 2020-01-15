@@ -1,5 +1,7 @@
 # spotifyGroupQueue
 
+[![CircleCI](https://circleci.com/gh/aaronraff/spotifyGroupQueueGo.svg?style=svg)](https://circleci.com/gh/aaronraff/spotifyGroupQueueGo)
+
 The purpose of this project is to simulate a group queue in Spotify. The specific use case that I have built this app for is when you are in a group setting and one person is connected to a speaker and controlling the song queue.
 
 With this web app it is possible to host a room (using your Spotify account) that your friends can then join and queue songs of their choosing.
