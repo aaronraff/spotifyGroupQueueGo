@@ -1,5 +1,5 @@
 all:
-	go run main.go api.go utils.go dbUtils.go
+	go run cmd/spotifyGroupQueue/main.go
 
 test:
 	go test ./...
